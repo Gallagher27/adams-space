@@ -1,86 +1,108 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>About - A Quiet Corner</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { height: 100%; }
-    body {
-      min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
-      background: #ffffff; color: #37352f; line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
-    .page { max-width: 720px; margin: 0 auto; padding: 80px 24px 60px; }
-    .breadcrumb {
-      font-size: 13px; color: #787774; margin-bottom: 24px;
-    }
-    .breadcrumb a { color: #787774; text-decoration: none; }
-    .breadcrumb a:hover { color: #37352f; }
-    .cover { font-size: 64px; margin-bottom: 12px; }
-    .page-title { font-size: 36px; font-weight: 700; color: #37352f; margin-bottom: 32px; letter-spacing: -0.5px; }
-    .section-title {
-      font-size: 18px; font-weight: 600; color: #37352f;
-      margin: 32px 0 12px; display: flex; align-items: center; gap: 8px;
-    }
-    .section-title .icon { font-size: 20px; }
-    .content { font-size: 15px; color: #37352f; line-height: 1.8; }
-    .content p { margin-bottom: 12px; }
-    .divider { height: 1px; background: #e8e7e4; margin: 32px 0; }
-    .info-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-    .info-table td {
-      padding: 10px 12px; border-bottom: 1px solid #f1f1ef; font-size: 14px;
-    }
-    .info-table td:first-child { color: #787774; width: 100px; }
-    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-    .tag {
-      font-size: 12px; padding: 4px 10px; border-radius: 4px;
-      background: #f1f1ef; color: #55534e; font-weight: 500;
-    }
-    @media (max-width: 600px) {
-      .page { padding: 48px 20px 40px; }
-      .page-title { font-size: 28px; }
-      .cover { font-size: 48px; }
-    }
-  </style>
+  <title>About - Adam&#39;s Space</title>
+  <meta name="description" content="个人简介，以及这个主站会怎么持续扩展。" />
+  <link rel="stylesheet" href="../assets/site.css" />
 </head>
 <body>
+  <div class="page">
+    
+    <header class="topbar">
+      <a class="brand" href="../">
+        <span class="brand-mark">✦</span>
+        <span class="brand-copy">
+          <span class="brand-title">Adam&#39;s Space</span>
+          <span class="brand-subtitle">一个持续生长的个人主站，用来放个人简介、项目入口，以及后续慢慢补进来的新页面。</span>
+        </span>
+      </a>
+      <nav class="nav-pills" aria-label="Primary">
+        <a class="nav-pill" href="../">Home</a><a class="nav-pill is-active" href="../about/">About</a><a class="nav-pill" href="../projects/">Projects</a><a class="nav-pill" href="../food-map/">KL Food</a>
+      </nav>
+    </header>
+  
+    
+    <a class="breadcrumb" href="../">← Back to home</a>
+    <section class="hero">
+      <div class="hero-icon">👤</div>
+      <div class="eyebrow">About</div>
+      <h1 class="page-title">个人简介</h1>
+      <p class="page-desc">这个页面把人和站点的关系说清楚，也方便后面继续往主站里接新的项目。</p>
+    </section>
 
-<div class="page">
-  <div class="breadcrumb"><a href="../">← Back to home</a></div>
-  <div class="cover">👤</div>
-  <h1 class="page-title">About</h1>
+    <section class="grid grid-two">
+      <article class="section-card section-card--soft">
+        <h2 class="section-title"><span class="section-title-icon">✍️</span>About Me</h2>
+        <p class="section-copy">我更偏爱简单、安静、能持续维护的网页表达方式。比起一次性堆很多内容，我更希望每个页面都能清楚地回答它为什么存在、能给人什么信息。</p><p class="section-copy">现在最完整的项目是 KL Food Map。后面如果再做新的地图、小工具或专题页，也都会先挂到这个主站，再慢慢整理成一个稳定的项目集合。</p><p class="section-copy">所以这个网站的角色不是展示一堆华丽页面，而是做一个长期可更新的个人界面。</p>
+      </article>
 
-  <div class="content">
-    <p>Hello. This page is a brief introduction without oversharing.</p>
-    <p>I enjoy exploring cities, discovering food, and solving small problems with simple tools.</p>
+      <aside class="section-card">
+        <h2 class="section-title"><span class="section-title-icon">📋</span>At a Glance</h2>
+        <div class="meta-list">
+          
+                <div class="meta-row">
+                  <div class="meta-label">Location</div>
+                  <div class="meta-value">Kuala Lumpur, Malaysia</div>
+                </div>
+              
+                <div class="meta-row">
+                  <div class="meta-label">Current focus</div>
+                  <div class="meta-value">Maps, food notes, and small web projects</div>
+                </div>
+              
+                <div class="meta-row">
+                  <div class="meta-label">Site role</div>
+                  <div class="meta-value">A lightweight hub for personal work</div>
+                </div>
+              
+        </div>
+        <div class="tag-list" style="margin-top: 18px;">
+          <span class="tag">Food</span><span class="tag">Maps</span><span class="tag">Code</span><span class="tag">Travel</span><span class="tag">Photography</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section-card" style="margin-top: 20px;">
+      <h2 class="section-title"><span class="section-title-icon">🏠</span>Why This Site Exists</h2>
+      <p class="section-copy">主站会一直保持比较轻的 Notion 风格，不追求过度包装，而是把个人信息和项目入口组织得更清楚。</p>
+      <p class="section-copy">未来如果有新的地图页、工具页、实验页或其他独立小站，都会继续挂到这里，主站就像一个持续更新的目录。</p>
+      <div class="callout">现在先放个人简介和 KL Food Map，后面再按同样方式往里接新项目，不需要重做整站结构。</div>
+    </section>
+
+    <section class="section-card" style="margin-top: 20px;">
+      <h2 class="section-title"><span class="section-title-icon">🧭</span>Go Next</h2>
+      <div class="link-grid">
+        
+              <a class="link-card" href="../about/">
+                <span class="link-card-icon">👤</span>
+                <div>
+                  <h3 class="link-card-title">About</h3>
+                  <p class="link-card-desc">更完整的个人简介，以及这个主站会怎么继续长出来。</p>
+                </div>
+              </a>
+            
+              <a class="link-card" href="../food-map/">
+                <span class="link-card-icon">🍜</span>
+                <div>
+                  <h3 class="link-card-title">KL Food Map</h3>
+                  <p class="link-card-desc">目前最完整的在线项目，一个可以持续更新的吉隆坡美食地图。</p>
+                </div>
+              </a>
+            
+              <a class="link-card" href="../projects/">
+                <span class="link-card-icon">🛠️</span>
+                <div>
+                  <h3 class="link-card-title">Projects</h3>
+                  <p class="link-card-desc">所有项目的统一入口，后面新增的站也会继续接到这里。</p>
+                </div>
+              </a>
+            
+      </div>
+    </section>
+  
+    <footer class="footer">© 2026 Adam · Built as a quiet home for projects that keep growing.</footer>
   </div>
-
-  <div class="divider"></div>
-
-  <div class="section-title"><span class="icon">📋</span> Details</div>
-  <table class="info-table">
-    <tr><td>📍 Location</td><td>Kuala Lumpur, Malaysia</td></tr>
-    <tr><td>💼 Role</td><td>—</td></tr>
-    <tr><td>🌐 Languages</td><td>Chinese / English / Bahasa Melayu</td></tr>
-  </table>
-
-  <div class="divider"></div>
-
-  <div class="section-title"><span class="icon">💡</span> Interests</div>
-  <div class="tags">
-    <span class="tag">🍜 Food</span>
-    <span class="tag">💻 Code</span>
-    <span class="tag">📷 Photography</span>
-    <span class="tag">✈️ Travel</span>
-    <span class="tag">📖 Reading</span>
-  </div>
-
-  <div class="divider"></div>
-
-  <p style="font-size:13px; color:#b4b4b0; text-align:center;">© 2025 Adam · Built with ❤️</p>
-</div>
-
 </body>
 </html>
