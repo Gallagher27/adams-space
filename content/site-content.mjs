@@ -2,9 +2,12 @@ export const siteContent = {
   site: {
     title: "Adam's Space",
     owner: "Adam",
+    url: "https://gallagher.lol",
     description:
       "一个持续生长的个人主站，用来放个人简介、项目入口，以及后续慢慢补进来的新页面。",
     footerNote: "Built as a quiet home for projects that keep growing.",
+    locale: "zh_CN",
+    themeColor: "#f7f6f3",
     year: "2026",
   },
   home: {

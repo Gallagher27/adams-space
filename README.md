@@ -12,6 +12,7 @@
 /assets/       → 公共样式
 /content/      → 站点内容数据
 /scripts/      → 静态页面构建脚本
+/templates/    → 新项目页面模板
 ```
 
 ## 管理方式
@@ -24,6 +25,8 @@
   根据同一份内容数据生成首页、`about` 和 `projects` 页面。
 - `assets/site.css`
   存放主站共用样式，统一整体的 Notion 风格。
+- `templates/project-page.html`
+  新项目页面模板。新增站内项目时可以复制它作为起点。
 
 ## 如何更新内容
 
@@ -43,13 +46,13 @@ npm run build
 
 ### 新增一个项目
 
-1. 在 `content/site-content.mjs` 的 `projects` 数组里新增一个项目对象。
-2. 如果是站内页面，把你的新页面目录放到网站根目录，例如：
+1. 复制 `templates/project-page.html`，放到一个新的项目目录里，例如：
 
 ```text
 /new-project/
 ```
 
+2. 在 `content/site-content.mjs` 的 `projects` 数组里新增一个项目对象。
 3. 在项目对象里把 `path` 指向对应目录，例如：
 
 ```text
@@ -63,6 +66,19 @@ npm run build
 ```
 
 这样首页和项目页就会自动带上这个新项目入口。
+
+### 站点基础优化
+
+运行 `npm run build` 时，会自动更新：
+
+- `index.html`
+- `about/index.html`
+- `projects/index.html`
+- `404.html`
+- `sitemap.xml`
+- `robots.txt`
+- `site.webmanifest`
+- `.nojekyll`
 
 ## 本地预览
 
