@@ -266,14 +266,19 @@
 
       .currency-card::before {
         position: absolute;
-        inset: 0;
+        right: 12px;
+        bottom: 10px;
+        width: 74%;
+        height: 56%;
         z-index: 0;
         background-image: var(--currency-bg);
-        background-position: center;
-        background-size: cover;
+        background-position: right center;
+        background-repeat: no-repeat;
+        background-size: auto 100%;
+        border-radius: 12px;
         content: "";
         filter: saturate(0.92) contrast(1.06);
-        opacity: 0.74;
+        opacity: 0.52;
         pointer-events: none;
         transition: opacity 180ms ease, transform 500ms ease;
       }
@@ -306,7 +311,7 @@
       }
 
       .currency-card:hover { border-color: #c4d0e5; box-shadow: 0 16px 35px rgba(35, 54, 89, 0.09); transform: translateY(-4px); }
-      .currency-card:hover::before { opacity: 0.84; transform: scale(1.025); }
+      .currency-card:hover::before { opacity: 0.62; transform: scale(1.025); }
       .currency-card.is-anchor { border-color: #aebeff; box-shadow: 0 0 0 3px rgba(69, 102, 237, 0.08), 0 14px 32px rgba(35, 54, 89, 0.07); }
       .currency-card.is-updated .currency-input-wrap { animation: valuePulse 600ms ease both; }
 
@@ -350,8 +355,7 @@
         padding: 0 13px;
         border: 1.5px solid #cfd9ee;
         border-radius: 16px;
-        background: rgba(255, 255, 255, 0.96);
-        backdrop-filter: blur(4px);
+        background: #fff;
         transition: border-color 160ms ease, box-shadow 160ms ease;
       }
 
@@ -362,14 +366,14 @@
       .currency-code { flex: none; color: var(--muted); font-size: 10px; font-weight: 900; }
       .anchor-label[hidden] { display: none; }
 
-      .compact-line { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 5px; min-height: 26px; margin-top: 13px; }
+      .compact-line { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 5px; width: fit-content; min-height: 26px; margin-top: 13px; padding-right: 7px; border-radius: 7px; background: rgba(255, 255, 255, 0.84); }
       .compact-label { color: var(--muted); font-size: 10px; }
       .compact-line strong { color: var(--ink-soft); font-size: 15px; letter-spacing: -0.03em; }
       .compact-unit { color: var(--brand-deep); font-size: 11px; font-weight: 900; }
-      .card-rate { position: relative; z-index: 1; min-height: 16px; margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+      .card-rate { position: relative; z-index: 1; width: fit-content; max-width: 100%; min-height: 16px; margin-top: 3px; padding-right: 7px; overflow: hidden; border-radius: 6px; background: rgba(255, 255, 255, 0.84); color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
       .card-rate strong { color: var(--ink-soft); font-weight: 800; }
 
-      .shortcut-label { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; margin-top: 17px; color: var(--muted); font-size: 10px; font-weight: 750; }
+      .shortcut-label { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; margin-top: 17px; padding: 2px 6px 2px 0; border-radius: 7px; background: rgba(255, 255, 255, 0.84); color: var(--muted); font-size: 10px; font-weight: 750; }
       .copy-card-btn { padding: 0; border: 0; color: var(--brand-deep); background: transparent; font-size: 10px; font-weight: 800; }
       .copy-card-btn:hover, .copy-card-btn:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
       .card-shortcuts { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
