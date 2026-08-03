@@ -46,6 +46,10 @@ const staticRoutes = [
     path: "food-map/",
     priority: "0.9",
   },
+  {
+    path: "currency-converter/",
+    priority: "0.8",
+  },
 ];
 
 await Promise.all(
@@ -208,6 +212,7 @@ function renderTopbar(currentPath) {
     { label: "About", path: "about/" },
     { label: "Projects", path: "projects/" },
     { label: "KL Food", path: "food-map/" },
+    { label: "FX", path: "currency-converter/" },
   ];
 
   return `
@@ -308,6 +313,40 @@ function renderHomePage() {
             `,
           )
           .join("")}
+      </div>
+    </section>
+
+    <section class="section-card converter-home-card" style="margin-top: 20px;">
+      <div>
+        <div class="converter-home-kicker"><span class="converter-home-dot"></span>Live utility</div>
+        <h2 class="section-title">汇率转换</h2>
+        <p class="section-copy">从任意一个币种开始，快速看懂人民币、美元、马币和其他常用币种之间的金额关系。</p>
+        <div class="tag-list">
+          <span class="tag">CNY</span>
+          <span class="tag">USD</span>
+          <span class="tag">MYR</span>
+          <span class="tag">主动刷新</span>
+        </div>
+        <a class="button button-primary button-inline" href="${hrefFor("", "currency-converter/")}">打开汇率转换</a>
+      </div>
+      <div class="converter-preview" aria-label="汇率转换预览">
+        <div class="converter-preview-header">
+          <span>From</span>
+          <span>To</span>
+        </div>
+        <div class="converter-preview-row">
+          <span class="converter-preview-code">CNY</span>
+          <strong>20 亿</strong>
+          <span class="converter-preview-arrow">→</span>
+          <span class="converter-preview-result"><strong>295.87 M</strong><small>USD</small></span>
+        </div>
+        <div class="converter-preview-row">
+          <span class="converter-preview-code">MYR</span>
+          <strong>1.21 B</strong>
+          <span class="converter-preview-arrow">→</span>
+          <span class="converter-preview-result"><strong>178.62 M</strong><small>USD</small></span>
+        </div>
+        <div class="converter-preview-note">四个币种平级输入 · 页面内独立运行</div>
       </div>
     </section>
 

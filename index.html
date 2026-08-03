@@ -34,7 +34,7 @@
         </span>
       </a>
       <nav class="nav-pills" aria-label="Primary">
-        <a class="nav-pill is-active" href="./">Home</a><a class="nav-pill" href="about/">About</a><a class="nav-pill" href="projects/">Projects</a><a class="nav-pill" href="food-map/">KL Food</a>
+        <a class="nav-pill is-active" href="./">Home</a><a class="nav-pill" href="about/">About</a><a class="nav-pill" href="projects/">Projects</a><a class="nav-pill" href="food-map/">KL Food</a><a class="nav-pill" href="currency-converter/">FX</a>
       </nav>
     </header>
   
@@ -120,6 +120,14 @@
                 </div>
               </a>
             
+              <a class="link-card" href="currency-converter/">
+                <span class="link-card-icon">↔</span>
+                <div>
+                  <h3 class="link-card-title">汇率转换</h3>
+                  <p class="link-card-desc">人民币、美元、马币和其他常用币种的相互换算工具。</p>
+                </div>
+              </a>
+            
               <a class="link-card" href="projects/">
                 <span class="link-card-icon">🛠️</span>
                 <div>
@@ -128,6 +136,40 @@
                 </div>
               </a>
             
+      </div>
+    </section>
+
+    <section class="section-card converter-home-card" style="margin-top: 20px;">
+      <div>
+        <div class="converter-home-kicker"><span class="converter-home-dot"></span>Live utility</div>
+        <h2 class="section-title">汇率转换</h2>
+        <p class="section-copy">从任意一个币种开始，快速看懂人民币、美元、马币和其他常用币种之间的金额关系。</p>
+        <div class="tag-list">
+          <span class="tag">CNY</span>
+          <span class="tag">USD</span>
+          <span class="tag">MYR</span>
+          <span class="tag">主动刷新</span>
+        </div>
+        <a class="button button-primary button-inline" href="currency-converter/">打开汇率转换</a>
+      </div>
+      <div class="converter-preview" aria-label="汇率转换预览">
+        <div class="converter-preview-header">
+          <span>From</span>
+          <span>To</span>
+        </div>
+        <div class="converter-preview-row">
+          <span class="converter-preview-code">CNY</span>
+          <strong>20 亿</strong>
+          <span class="converter-preview-arrow">→</span>
+          <span class="converter-preview-result"><strong>295.87 M</strong><small>USD</small></span>
+        </div>
+        <div class="converter-preview-row">
+          <span class="converter-preview-code">MYR</span>
+          <strong>1.21 B</strong>
+          <span class="converter-preview-arrow">→</span>
+          <span class="converter-preview-result"><strong>178.62 M</strong><small>USD</small></span>
+        </div>
+        <div class="converter-preview-note">四个币种平级输入 · 页面内独立运行</div>
       </div>
     </section>
 
@@ -198,6 +240,25 @@
       </div>
       <p class="section-copy" style="margin: 0;">这个项目既是记录工具，也是之后继续扩展其他城市或专题地图的雏形。现在已经可以按距离、评分和名称浏览，后面也能继续补更多收藏。</p>
       <a class="button button-secondary" href="food-map/">Open project</a>
+    </article>
+  
+    <article class="project-list-card">
+      <div class="project-head">
+        <div class="project-title-wrap">
+          <span class="project-icon">↔</span>
+          <div>
+            <h3 class="project-title" style="font-size: 18px; margin-bottom: 2px;">汇率转换</h3>
+            <p class="project-detail">一个可以从人民币、美元、马币或其他币种直接开始的相互换算工具。</p>
+          </div>
+        </div>
+        <span class="status-pill">Live</span>
+      </div>
+      <div class="pill-list">
+        <span class="pill">Utility</span>
+        <span class="pill">HTML / CSS / JS</span><span class="pill">Exchange Rates</span><span class="pill">Responsive</span>
+      </div>
+      <p class="section-copy" style="margin: 0;">支持常用数量单位快捷输入，所有币种平级展示，打开后可以主动刷新最新汇率。</p>
+      <a class="button button-secondary" href="currency-converter/">Open converter</a>
     </article>
   
     <article class="project-list-card">

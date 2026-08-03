@@ -57,6 +57,12 @@ export const siteContent = {
       path: "food-map/",
     },
     {
+      icon: "↔",
+      title: "汇率转换",
+      description: "人民币、美元、马币和其他常用币种的相互换算工具。",
+      path: "currency-converter/",
+    },
+    {
       icon: "🛠️",
       title: "Projects",
       description: "所有项目的统一入口，后面新增的站也会继续接到这里。",
@@ -83,6 +89,26 @@ export const siteContent = {
       ],
       tags: ["Google Maps API", "HTML / CSS / JS", "Responsive", "Food Notes"],
       ctaLabel: "Open project",
+    },
+    {
+      slug: "currency-converter",
+      icon: "↔",
+      title: "汇率转换",
+      status: "Live",
+      kind: "Utility",
+      path: "currency-converter/",
+      featured: false,
+      summary:
+        "一个可以从人民币、美元、马币或其他币种直接开始的相互换算工具。",
+      detail:
+        "支持常用数量单位快捷输入，所有币种平级展示，打开后可以主动刷新最新汇率。",
+      bullets: [
+        "人民币、美元、马币和备选币种平级输入",
+        "支持 K / M / B、万 / 千万 / 亿等易读单位",
+        "可按需增减展示币种，适合桌面端和手机端",
+      ],
+      tags: ["HTML / CSS / JS", "Exchange Rates", "Responsive"],
+      ctaLabel: "Open converter",
     },
     {
       slug: "project-archive",

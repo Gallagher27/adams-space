@@ -9,6 +9,7 @@
 /about/        → 个人简介
 /projects/     → 项目入口页
 /food-map/     → 吉隆坡美食地图
+/currency-converter/ → 独立汇率转换工具
 /assets/       → 公共样式
 /content/      → 站点内容数据
 /scripts/      → 静态页面构建脚本
