@@ -130,7 +130,7 @@ function renderLayout({ title, description, currentPath, body }) {
   <div class="page">
     ${renderTopbar(currentPath)}
     ${body}
-    <footer class="footer">© ${escapeHtml(siteContent.site.year)} ${escapeHtml(siteContent.site.owner)} · ${escapeHtml(siteContent.site.footerNote)}</footer>
+    <footer class="footer">© ${escapeHtml(siteContent.site.year)} ${escapeHtml(siteContent.site.owner)} · ${langPair(siteContent.site.footerNote.zh, siteContent.site.footerNote.en)}</footer>
   </div>
   <script>
     (() => {
@@ -169,11 +169,11 @@ function renderNotFoundPage() {
     <section class="hero">
       <div class="hero-icon">?</div>
       <div class="eyebrow">404</div>
-      <h1 class="page-title">页面暂时不存在</h1>
-      <p class="page-desc">这个入口可能还没接进来，或者链接已经移动。可以先回到主站首页，继续看个人简介和项目集合。</p>
+      <h1 class="page-title">${langPair("页面暂时不存在", "This page is not available")}</h1>
+      <p class="page-desc">${langPair("这个入口可能还没接进来，或者链接已经移动。可以先回到主站首页，继续看个人简介和项目集合。", "This page may not be connected yet, or the link may have moved. Return home to browse the profile and project collection.")}</p>
       <div class="hero-actions">
-        <a class="button button-primary" href="./">Back Home</a>
-        <a class="button button-secondary" href="projects/">Open Projects</a>
+        <a class="button button-primary" href="./">${langPair("回到首页", "Back home")}</a>
+        <a class="button button-secondary" href="projects/">${langPair("查看项目", "View projects")}</a>
       </div>
     </section>
   `;
@@ -345,7 +345,7 @@ function renderHomeProject(project, index) {
       <div class="home-project-number">${number}</div>
       <div class="home-project-copy">
         <div class="home-project-title-row">
-          <h3>${escapeHtml(project.title)}</h3>
+          <h3>${langPair(project.title.zh, project.title.en)}</h3>
           <span class="home-project-status">${langPair("在线", "Live")}</span>
         </div>
         <p>${langPair(project.homeSummary.zh, project.homeSummary.en)}</p>
@@ -356,7 +356,7 @@ function renderHomeProject(project, index) {
             .join("")}
         </div>
       </div>
-      <a class="home-project-link" href="${hrefFor("", project.path)}" aria-label="${escapeHtml(project.title)}">
+      <a class="home-project-link" href="${hrefFor("", project.path)}" aria-label="${escapeHtml(project.title.en)}">
         <span>${langPair("打开", "Open")}</span>
         <span aria-hidden="true">↗</span>
       </a>
@@ -366,31 +366,31 @@ function renderHomeProject(project, index) {
 
 function renderAboutPage() {
   return `
-    <a class="breadcrumb" href="${hrefFor("about/", "")}">← Back to home</a>
+    <a class="breadcrumb" href="${hrefFor("about/", "")}">← ${langPair("返回首页", "Back home")}</a>
     <section class="hero">
       <div class="hero-icon">👤</div>
-      <div class="eyebrow">About</div>
-      <h1 class="page-title">个人简介</h1>
-      <p class="page-desc">这个页面把人和站点的关系说清楚，也方便后面继续往主站里接新的项目。</p>
+      <div class="eyebrow">${langPair("关于", "ABOUT")}</div>
+      <h1 class="page-title">${langPair("个人简介", "About me")}</h1>
+      <p class="page-desc">${langPair("这个页面把人和站点的关系说清楚，也方便后面继续往主站里接新的项目。", "A little more about the person behind the site and how this collection will grow.")}</p>
     </section>
 
     <section class="grid grid-two">
       <article class="section-card section-card--soft">
-        <h2 class="section-title"><span class="section-title-icon">✍️</span>About Me</h2>
+        <h2 class="section-title"><span class="section-title-icon">✍️</span>${langPair("关于我", "About me")}</h2>
         ${siteContent.profile.longIntro
-          .map((paragraph) => `<p class="section-copy">${escapeHtml(paragraph)}</p>`)
+          .map((paragraph) => `<p class="section-copy">${langPair(paragraph.zh, paragraph.en)}</p>`)
           .join("")}
       </article>
 
       <aside class="section-card">
-        <h2 class="section-title"><span class="section-title-icon">📋</span>At a Glance</h2>
+        <h2 class="section-title"><span class="section-title-icon">📋</span>${langPair("快速了解", "At a glance")}</h2>
         <div class="meta-list">
           ${siteContent.profile.facts
             .map(
               (fact) => `
                 <div class="meta-row">
-                  <div class="meta-label">${escapeHtml(fact.label)}</div>
-                  <div class="meta-value">${escapeHtml(fact.value)}</div>
+                  <div class="meta-label">${langPair(fact.label.zh, fact.label.en)}</div>
+                  <div class="meta-value">${langPair(fact.value.zh, fact.value.en)}</div>
                 </div>
               `,
             )
@@ -405,14 +405,14 @@ function renderAboutPage() {
     </section>
 
     <section class="section-card" style="margin-top: 20px;">
-      <h2 class="section-title"><span class="section-title-icon">🏠</span>Why This Site Exists</h2>
-      <p class="section-copy">主站会一直保持比较轻的 Notion 风格，不追求过度包装，而是把个人信息和项目入口组织得更清楚。</p>
-      <p class="section-copy">未来如果有新的地图页、工具页、实验页或其他独立小站，都会继续挂到这里，主站就像一个持续更新的目录。</p>
-      <div class="callout">现在先放个人简介和 KL Food Map，后面再按同样方式往里接新项目，不需要重做整站结构。</div>
+      <h2 class="section-title"><span class="section-title-icon">🏠</span>${langPair("为什么有这个网站", "Why this site exists")}</h2>
+      <p class="section-copy">${langPair("主站会一直保持比较轻的 Notion 风格，不追求过度包装，而是把个人信息和项目入口组织得更清楚。", "The site stays light and Notion-like: less packaging, clearer personal information, and easier project entry points.")}</p>
+      <p class="section-copy">${langPair("未来如果有新的地图页、工具页、实验页或其他独立小站，都会继续挂到这里，主站就像一个持续更新的目录。", "New maps, tools, experiments, and standalone sites can keep joining this page, turning it into a living directory.")}</p>
+      <div class="callout">${langPair("现在先放个人简介和 KL Food Map，后面再按同样方式往里接新项目，不需要重做整站结构。", "The profile and KL Food Map are the starting point. New projects can be added without rebuilding the site structure.")}</div>
     </section>
 
     <section class="section-card" style="margin-top: 20px;">
-      <h2 class="section-title"><span class="section-title-icon">🧭</span>Go Next</h2>
+      <h2 class="section-title"><span class="section-title-icon">🧭</span>${langPair("继续浏览", "Go next")}</h2>
       <div class="link-grid">
         ${siteContent.navigation
           .map(
@@ -420,8 +420,8 @@ function renderAboutPage() {
               <a class="link-card" href="${hrefFor("about/", item.path)}">
                 <span class="link-card-icon">${escapeHtml(item.icon)}</span>
                 <div>
-                  <h3 class="link-card-title">${escapeHtml(item.title)}</h3>
-                  <p class="link-card-desc">${escapeHtml(item.description)}</p>
+                  <h3 class="link-card-title">${langPair(item.title.zh, item.title.en)}</h3>
+                  <p class="link-card-desc">${langPair(item.description.zh, item.description.en)}</p>
                 </div>
               </a>
             `,
@@ -434,22 +434,22 @@ function renderAboutPage() {
 
 function renderProjectsPage() {
   return `
-    <a class="breadcrumb" href="${hrefFor("projects/", "")}">← Back to home</a>
+    <a class="breadcrumb" href="${hrefFor("projects/", "")}">← ${langPair("返回首页", "Back home")}</a>
     <section class="hero">
       <div class="hero-icon">🛠️</div>
-      <div class="eyebrow">Projects</div>
-      <h1 class="page-title">项目入口</h1>
-      <p class="page-desc">这里会收纳当前项目和后续新增的小站。现在先以 KL Food Map 为主，后面继续往这个 shelf 里追加。</p>
+      <div class="eyebrow">${langPair("项目", "PROJECTS")}</div>
+      <h1 class="page-title">${langPair("项目入口", "Project shelf")}</h1>
+      <p class="page-desc">${langPair("这里会收纳当前项目和后续新增的小站。现在先以 KL Food Map 为主，后面继续往这个集合里追加。", "A home for current work and future sites. KL Food Map is the first entry, with more to come.")}</p>
     </section>
 
     <section class="section-card">
-      <h2 class="section-title"><span class="section-title-icon">🍜</span>Current Featured Work</h2>
+      <h2 class="section-title"><span class="section-title-icon">🍜</span>${langPair("当前代表项目", "Current featured work")}</h2>
       ${renderFeaturedProject(featuredProject, "projects/")}
     </section>
 
     <section class="section-card" style="margin-top: 20px;">
-      <h2 class="section-title"><span class="section-title-icon">🗃️</span>Project Shelf</h2>
-      <p class="section-copy">${escapeHtml(siteContent.projectShelfNote)}</p>
+      <h2 class="section-title"><span class="section-title-icon">🗃️</span>${langPair("项目集合", "Project shelf")}</h2>
+      <p class="section-copy">${langPair(siteContent.projectShelfNote.zh, siteContent.projectShelfNote.en)}</p>
       <div class="project-grid">
         ${siteContent.projects
           .map((project) => renderProjectListCard(project, "projects/"))
@@ -458,9 +458,9 @@ function renderProjectsPage() {
     </section>
 
     <section class="section-card section-card--soft" style="margin-top: 20px;">
-      <h2 class="section-title"><span class="section-title-icon">🌱</span>How This Will Grow</h2>
-      <p class="section-copy">后面新增项目时，不需要再把首页、项目页和简介页分别手改一遍。只要按统一结构补内容，主站就会自然更新。</p>
-      <div class="callout">这让主站更像一个长期维护的个人项目目录，而不是一次性做完的静态落地页。</div>
+      <h2 class="section-title"><span class="section-title-icon">🌱</span>${langPair("它会怎样继续生长", "How this will grow")}</h2>
+      <p class="section-copy">${langPair("后面新增项目时，不需要再把首页、项目页和简介页分别手改一遍。只要按统一结构补内容，主站就会自然更新。", "New projects do not require separate edits across the home, project, and profile pages. Add the shared project data and the site grows with it.")}</p>
+      <div class="callout">${langPair("这让主站更像一个长期维护的个人项目目录，而不是一次性做完的静态落地页。", "That keeps the site as a maintained personal directory instead of a one-off landing page.")}</div>
     </section>
   `;
 }
@@ -473,37 +473,37 @@ function renderFeaturedProject(project, currentPath) {
           <div class="project-title-wrap">
             <span class="project-icon">${escapeHtml(project.icon)}</span>
             <div>
-              <h3 class="project-title">${escapeHtml(project.title)}</h3>
-              <p class="project-summary">${escapeHtml(project.summary)}</p>
+              <h3 class="project-title">${langPair(project.title.zh, project.title.en)}</h3>
+              <p class="project-summary">${langPair(project.summary.zh, project.summary.en)}</p>
             </div>
           </div>
-          <span class="status-pill">${escapeHtml(project.status)}</span>
+          <span class="status-pill">${langPair(project.status.zh, project.status.en)}</span>
         </div>
-        <p class="project-detail" style="margin-top: 14px;">${escapeHtml(project.detail)}</p>
+        <p class="project-detail" style="margin-top: 14px;">${langPair(project.detail.zh, project.detail.en)}</p>
         <ul class="bullet-list" style="margin-top: 16px;">
-          ${project.bullets.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+          ${project.bullets.map((item) => `<li>${langPair(item.zh, item.en)}</li>`).join("")}
         </ul>
         <div class="tag-list" style="margin-top: 16px;">
           ${project.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
         </div>
       </div>
       <div class="section-card section-card--soft" style="padding: 18px;">
-        <h4 style="margin: 0 0 12px; font-size: 15px;">Project Notes</h4>
+        <h4 style="margin: 0 0 12px; font-size: 15px;">${langPair("项目说明", "Project notes")}</h4>
         <div class="meta-list">
           <div class="meta-row">
-            <div class="meta-label">Type</div>
-            <div class="meta-value">${escapeHtml(project.kind)}</div>
+            <div class="meta-label">${langPair("类型", "Type")}</div>
+            <div class="meta-value">${langPair(project.kind.zh, project.kind.en)}</div>
           </div>
           <div class="meta-row">
-            <div class="meta-label">Status</div>
-            <div class="meta-value">${escapeHtml(project.status)}</div>
+            <div class="meta-label">${langPair("状态", "Status")}</div>
+            <div class="meta-value">${langPair(project.status.zh, project.status.en)}</div>
           </div>
           <div class="meta-row">
-            <div class="meta-label">Role here</div>
-            <div class="meta-value">主站当前的代表项目，也是之后继续扩展的起点。</div>
+            <div class="meta-label">${langPair("网站角色", "Role here")}</div>
+            <div class="meta-value">${langPair("主站当前的代表项目，也是之后继续扩展的起点。", "A featured project here and a starting point for future expansion.")}</div>
           </div>
         </div>
-        <a class="button button-primary button-inline" href="${hrefFor(currentPath, project.path)}">${escapeHtml(project.ctaLabel)}</a>
+        <a class="button button-primary button-inline" href="${hrefFor(currentPath, project.path)}">${langPair(project.ctaLabel.zh, project.ctaLabel.en)}</a>
       </div>
     </article>
   `;
@@ -516,18 +516,18 @@ function renderProjectListCard(project, currentPath) {
         <div class="project-title-wrap">
           <span class="project-icon">${escapeHtml(project.icon)}</span>
           <div>
-            <h3 class="project-title" style="font-size: 18px; margin-bottom: 2px;">${escapeHtml(project.title)}</h3>
-            <p class="project-detail">${escapeHtml(project.summary)}</p>
+            <h3 class="project-title" style="font-size: 18px; margin-bottom: 2px;">${langPair(project.title.zh, project.title.en)}</h3>
+            <p class="project-detail">${langPair(project.summary.zh, project.summary.en)}</p>
           </div>
         </div>
-        <span class="status-pill">${escapeHtml(project.status)}</span>
+        <span class="status-pill">${langPair(project.status.zh, project.status.en)}</span>
       </div>
       <div class="pill-list">
-        <span class="pill">${escapeHtml(project.kind)}</span>
+        <span class="pill">${langPair(project.kind.zh, project.kind.en)}</span>
         ${project.tags.map((tag) => `<span class="pill">${escapeHtml(tag)}</span>`).join("")}
       </div>
-      <p class="section-copy" style="margin: 0;">${escapeHtml(project.detail)}</p>
-      <a class="button button-secondary" href="${hrefFor(currentPath, project.path)}">${escapeHtml(project.ctaLabel)}</a>
+      <p class="section-copy" style="margin: 0;">${langPair(project.detail.zh, project.detail.en)}</p>
+      <a class="button button-secondary" href="${hrefFor(currentPath, project.path)}">${langPair(project.ctaLabel.zh, project.ctaLabel.en)}</a>
     </article>
   `;
 }
