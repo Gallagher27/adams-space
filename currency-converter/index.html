@@ -63,6 +63,12 @@
 
       .topbar { gap: 20px; }
 
+      .topbar-tools {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }
+
       .brand {
         display: inline-flex;
         align-items: center;
@@ -93,6 +99,26 @@
       .brand-mark span:nth-child(4) { background: #fff; opacity: 0.65; }
 
       .topbar-note { color: var(--muted); font-size: 12px; letter-spacing: 0.02em; }
+
+      .language-toggle {
+        min-width: 42px;
+        height: 34px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: rgba(255, 255, 255, 0.8);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .language-toggle:hover,
+      .language-toggle:focus-visible {
+        border-color: #bcc9ea;
+        color: var(--brand-deep);
+        background: var(--brand-pale);
+        outline: none;
+      }
 
       .hero {
         align-items: flex-end;
@@ -365,6 +391,7 @@
       @media (max-width: 560px) {
         .page-shell { padding: 19px 14px 29px; }
         .topbar-note { display: none; }
+        .topbar-tools { gap: 0; }
         .hero { padding: 39px 4px 25px; }
         h1 { font-size: 45px; }
         .hero-subtitle { font-size: 14px; }
@@ -388,58 +415,61 @@
   <body>
     <main class="page-shell">
       <header class="topbar">
-        <a class="brand" href="#top" aria-label="FX Flip 首页">
+        <a class="brand" href="#top" aria-label="FX Flip 首页" data-i18n-aria-label="brandLabel">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
           <span>FX FLIP</span>
         </a>
-        <span class="topbar-note">Daily rate check · CNY base</span>
+        <div class="topbar-tools">
+          <span class="topbar-note" data-i18n="topbarNote">每日更新 · 以人民币为基准</span>
+          <button class="language-toggle" id="languageToggle" type="button" aria-label="切换为英文" aria-pressed="false">EN</button>
+        </div>
       </header>
 
       <section class="hero" id="top">
         <div class="hero-copy">
           <p class="eyebrow">FX FLIP</p>
-          <h1>汇率转换</h1>
-          <p class="hero-subtitle">任意币种输入，结果同步换算。</p>
+          <h1 data-i18n="heroTitle">汇率转换</h1>
+          <p class="hero-subtitle" data-i18n="heroSubtitle">任意币种输入，结果同步换算。</p>
         </div>
-        <div class="live-pill loading" id="livePill"><span class="live-dot"></span><span id="livePillText">正在同步汇率</span></div>
+        <div class="live-pill loading" id="livePill"><span class="live-dot"></span><span id="livePillText" data-i18n="syncing">正在同步汇率</span></div>
       </section>
 
-      <section class="panel converter-panel" aria-label="相互汇率换算工作区">
+      <section class="panel converter-panel" aria-label="相互汇率换算工作区" data-i18n-aria-label="workspaceLabel">
         <div class="converter-toolbar">
           <div>
-            <p class="panel-kicker">01 · Converter</p>
-            <h2>汇率转换</h2>
-            <p>点击任意金额框开始换算。</p>
+            <p class="panel-kicker" data-i18n="converterKicker">01 · 换算工具</p>
+            <h2 data-i18n="converterTitle">汇率转换</h2>
+            <p data-i18n="converterHint">点击任意金额框开始换算。</p>
           </div>
           <div class="toolbar-actions">
             <span class="editing-note" id="editingNote">当前从人民币换算</span>
-            <button class="refresh-btn" id="refreshBtn" type="button"><span class="refresh-icon" aria-hidden="true">↻</span><span>刷新汇率</span></button>
+            <button class="refresh-btn" id="refreshBtn" type="button" aria-label="刷新汇率" data-i18n-aria-label="refreshRates"><span class="refresh-icon" aria-hidden="true">↻</span><span data-i18n="refreshRates">刷新汇率</span></button>
           </div>
         </div>
 
         <div class="rate-banner" role="status" aria-live="polite">
           <span class="status-dot loading" id="statusDot"></span>
-          <span id="rateStatus">正在获取今日基准汇率…</span>
+          <span id="rateStatus" data-i18n="fetchingRates">正在获取今日基准汇率…</span>
         </div>
 
         <div class="currency-grid" id="currencyGrid" aria-live="polite"></div>
       </section>
 
-      <section class="bottom-row" aria-label="使用说明">
+      <section class="bottom-row" aria-label="使用说明" data-i18n-aria-label="usageLabel">
         <article class="info-card">
-          <h3>平级输入</h3>
-          <p>最少保留 1 个币种，最多展示 4 个。移除和添加只会改变数量，不会改变每个金额框的视觉权重。</p>
-          <div class="unit-line"><span class="unit-tag">CNY · 亿 / 万</span><span class="unit-tag mint">USD · K / M / B</span><span class="unit-tag warm">MYR · K / M / B</span></div>
+          <h3 data-i18n="equalInputTitle">平级输入</h3>
+          <p data-i18n="equalInputCopy">最少保留 1 个币种，最多展示 4 个。移除和添加只会改变数量，不会改变每个金额框的视觉权重。</p>
+          <div class="unit-line"><span class="unit-tag" data-i18n="cnyUnits">CNY · 亿 / 万</span><span class="unit-tag mint">USD · K / M / B</span><span class="unit-tag warm">MYR · K / M / B</span></div>
         </article>
         <article class="info-card">
-          <h3>易读结果</h3>
-          <p>每个卡片都同时保留精确金额和 K / M / B / T 速读值，方便快速判断规模。</p>
-          <div class="unit-line"><span class="unit-tag">K · 千</span><span class="unit-tag mint">M · 百万</span><span class="unit-tag warm">B · 十亿</span><span class="unit-tag">T · 万亿</span></div>
+          <h3 data-i18n="readableTitle">易读结果</h3>
+          <p data-i18n="readableCopy">每个卡片都同时保留精确金额和 K / M / B / T 速读值，方便快速判断规模。</p>
+          <div class="unit-line"><span class="unit-tag">K · <span data-i18n="thousand">千</span></span><span class="unit-tag mint">M · <span data-i18n="million">百万</span></span><span class="unit-tag warm">B · <span data-i18n="billion">十亿</span></span><span class="unit-tag">T · <span data-i18n="trillion">万亿</span></span></div>
         </article>
       </section>
 
       <footer class="footer-row">
-        <span>汇率数据按日更新；点击右上角“刷新汇率”时，会主动获取最新基准数据。</span>
+        <span data-i18n="footerNote">汇率数据按日更新；点击右上角“刷新汇率”时，会主动获取最新基准数据。</span>
         <span class="footer-right">Rates by <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">ExchangeRate-API</a> · Open Access</span>
       </footer>
     </main>
@@ -450,16 +480,160 @@
       const CACHE_TTL = 60 * 60 * 1000;
       const SUPPORTED_CODES = ["CNY", "USD", "MYR", "IDR", "SGD", "THB", "VND", "EUR"];
 
-      const CURRENCIES = {
-        CNY: { name: "人民币", symbol: "¥" },
-        USD: { name: "美元", symbol: "$" },
-        MYR: { name: "马来西亚令吉", shortName: "马币", symbol: "RM" },
-        IDR: { name: "印尼盾", symbol: "Rp" },
-        SGD: { name: "新加坡元", symbol: "S$" },
-        THB: { name: "泰铢", symbol: "฿" },
-        VND: { name: "越南盾", symbol: "₫" },
-        EUR: { name: "欧元", symbol: "€" }
+      const TRANSLATIONS = {
+        zh: {
+          pageTitle: "FX Flip · 多币种换算",
+          brandLabel: "FX Flip 首页",
+          topbarNote: "每日更新 · 以人民币为基准",
+          heroTitle: "汇率转换",
+          heroSubtitle: "任意币种输入，结果同步换算。",
+          syncing: "正在同步汇率",
+          synced: "汇率已同步",
+          useRecentData: "使用最近数据",
+          workspaceLabel: "相互汇率换算工作区",
+          converterKicker: "01 · 换算工具",
+          converterTitle: "汇率转换",
+          converterHint: "点击任意金额框开始换算。",
+          refreshRates: "刷新汇率",
+          fetchingRates: "正在获取今日基准汇率…",
+          usageLabel: "使用说明",
+          equalInputTitle: "平级输入",
+          equalInputCopy: "最少保留 1 个币种，最多展示 4 个。移除和添加只会改变数量，不会改变每个金额框的视觉权重。",
+          cnyUnits: "CNY · 亿 / 万",
+          readableTitle: "易读结果",
+          readableCopy: "每个卡片都同时保留精确金额和 K / M / B / T 速读值，方便快速判断规模。",
+          thousand: "千",
+          million: "百万",
+          billion: "十亿",
+          trillion: "万亿",
+          footerNote: "汇率数据按日更新；点击右上角“刷新汇率”时，会主动获取最新基准数据。",
+          currentInput: "当前输入",
+          currencyHint: "可输入 / 可换算",
+          amountSuffix: "金额",
+          convertingAmount: "换算后的金额，也可以直接改写",
+          convertingFrom: "当前从",
+          convertingFromSuffix: "换算",
+          readable: "易读",
+          shortcutUnits: "快捷单位",
+          copyExact: "复制精确值",
+          copied: "已复制",
+          manualCopy: "请手动复制",
+          remove: "移除",
+          keepOne: "至少保留一个币种",
+          addCurrencyTitle: "添加第 {n} 个币种",
+          addCurrencyDescription: "需要时再加入新加坡元、印尼盾、泰铢或越南盾。",
+          selectCurrency: "选择币种",
+          fetchingLatest: "正在获取最新基准汇率…",
+          unableToConnect: "暂时无法连接汇率源，当前为内置最近参考值",
+          cachedPrefix: "已使用本机缓存 · ",
+          todayPrefix: "今日基准汇率 · ",
+          updateSuffix: "更新",
+          unknownUpdate: "更新时间未知",
+          noUpdate: "暂未获取更新时间",
+          shortcutHundredMillion: "亿",
+          shortcutTenMillion: "千万",
+          shortcutTenThousand: "万",
+          shortcutHundred: "百",
+          shortcutClear: "清空",
+          shortcutClearTitle: "清空当前金额",
+          shortcutHundredMillionTitle: "× 100,000,000",
+          shortcutTenMillionTitle: "× 10,000,000",
+          shortcutTenThousandTitle: "× 10,000",
+          shortcutHundredTitle: "× 100",
+          shortcutThousandTitle: "× 1,000",
+          shortcutMillionTitle: "× 1,000,000",
+          shortcutBillionTitle: "× 1,000,000,000"
+        },
+        en: {
+          pageTitle: "FX Flip · Currency Converter",
+          brandLabel: "FX Flip home",
+          topbarNote: "Daily refresh · CNY base",
+          heroTitle: "Currency conversion",
+          heroSubtitle: "Enter any currency and see the equivalent instantly.",
+          syncing: "Syncing rates",
+          synced: "Rates synced",
+          useRecentData: "Using recent data",
+          workspaceLabel: "Two-way currency conversion workspace",
+          converterKicker: "01 · Converter",
+          converterTitle: "Currency conversion",
+          converterHint: "Click any amount field to start converting.",
+          refreshRates: "Refresh rates",
+          fetchingRates: "Fetching today’s base rates…",
+          usageLabel: "How it works",
+          equalInputTitle: "Equal inputs",
+          equalInputCopy: "Keep at least 1 currency and show up to 4. Adding or removing a card never changes the visual weight of the inputs.",
+          cnyUnits: "CNY · 100M / 10K",
+          readableTitle: "Readable results",
+          readableCopy: "Every card keeps the exact amount alongside a quick K / M / B / T view for faster scale checks.",
+          thousand: "thousand",
+          million: "million",
+          billion: "billion",
+          trillion: "trillion",
+          footerNote: "Rates refresh daily. Use “Refresh rates” in the top-right to fetch the latest base data.",
+          currentInput: "Current input",
+          currencyHint: "Editable / convertible",
+          amountSuffix: " amount",
+          convertingAmount: "Converted amount — also editable",
+          convertingFrom: "Converting from",
+          convertingFromSuffix: "",
+          readable: "Readable",
+          shortcutUnits: "Quick units",
+          copyExact: "Copy exact value",
+          copied: "Copied",
+          manualCopy: "Copy manually",
+          remove: "Remove",
+          keepOne: "Keep at least one currency",
+          addCurrencyTitle: "Add currency {n}",
+          addCurrencyDescription: "Add Singapore dollars, Indonesian rupiah, baht, or dong when needed.",
+          selectCurrency: "Choose currency",
+          fetchingLatest: "Fetching the latest base rates…",
+          unableToConnect: "Unable to reach the rate source. Using the built-in recent reference values.",
+          cachedPrefix: "Using local cache · ",
+          todayPrefix: "Today’s base rates · ",
+          updateSuffix: "updated",
+          unknownUpdate: "Update time unknown",
+          noUpdate: "No update time yet",
+          shortcutHundredMillion: "100M",
+          shortcutTenMillion: "10M",
+          shortcutTenThousand: "10K",
+          shortcutHundred: "100",
+          shortcutClear: "Clear",
+          shortcutClearTitle: "Clear current amount",
+          shortcutHundredMillionTitle: "× 100,000,000",
+          shortcutTenMillionTitle: "× 10,000,000",
+          shortcutTenThousandTitle: "× 10,000",
+          shortcutHundredTitle: "× 100",
+          shortcutThousandTitle: "× 1,000",
+          shortcutMillionTitle: "× 1,000,000",
+          shortcutBillionTitle: "× 1,000,000,000"
+        }
       };
+
+      let language = localStorage.getItem("fx-flip-language") === "en" ? "en" : "zh";
+
+      function t(key) {
+        return TRANSLATIONS[language][key] || key;
+      }
+
+      const CURRENCIES = {
+        CNY: { name: { zh: "人民币", en: "Chinese Yuan" }, symbol: "¥" },
+        USD: { name: { zh: "美元", en: "US Dollar" }, symbol: "$" },
+        MYR: { name: { zh: "马来西亚令吉", en: "Malaysian Ringgit" }, shortName: { zh: "马币", en: "MYR" }, symbol: "RM" },
+        IDR: { name: { zh: "印尼盾", en: "Indonesian Rupiah" }, symbol: "Rp" },
+        SGD: { name: { zh: "新加坡元", en: "Singapore Dollar" }, symbol: "S$" },
+        THB: { name: { zh: "泰铢", en: "Thai Baht" }, symbol: "฿" },
+        VND: { name: { zh: "越南盾", en: "Vietnamese Dong" }, symbol: "₫" },
+        EUR: { name: { zh: "欧元", en: "Euro" }, symbol: "€" }
+      };
+
+      function currencyName(code) {
+        return CURRENCIES[code].name[language];
+      }
+
+      function currencyShortName(code) {
+        const info = CURRENCIES[code];
+        return info.shortName?.[language] || info.name[language];
+      }
 
       const FALLBACK_RATES = {
         CNY: 1,
@@ -598,17 +772,17 @@
       function shortcutConfig(code) {
         if (code === "CNY") {
           return [
-            { label: "亿", exponent: 8, title: "× 100,000,000" },
-            { label: "千万", exponent: 7, title: "× 10,000,000" },
-            { label: "万", exponent: 4, title: "× 10,000" },
-            { label: "百", exponent: 2, title: "× 100" }
+            { label: t("shortcutHundredMillion"), exponent: 8, title: t("shortcutHundredMillionTitle") },
+            { label: t("shortcutTenMillion"), exponent: 7, title: t("shortcutTenMillionTitle") },
+            { label: t("shortcutTenThousand"), exponent: 4, title: t("shortcutTenThousandTitle") },
+            { label: t("shortcutHundred"), exponent: 2, title: t("shortcutHundredTitle") }
           ];
         }
         return [
-          { label: "K", exponent: 3, title: "× 1,000" },
-          { label: "Million", exponent: 6, title: "× 1,000,000" },
-          { label: "Billion", exponent: 9, title: "× 1,000,000,000" },
-          { label: "Clear", exponent: null, title: "清空当前金额" }
+          { label: "K", exponent: 3, title: t("shortcutThousandTitle") },
+          { label: "Million", exponent: 6, title: t("shortcutMillionTitle") },
+          { label: "Billion", exponent: 9, title: t("shortcutBillionTitle") },
+          { label: t("shortcutClear"), exponent: null, title: t("shortcutClearTitle") }
         ];
       }
 
@@ -622,8 +796,7 @@
       }
 
       function setEditingNote() {
-        const info = CURRENCIES[state.anchorCode];
-        els.editingNote.textContent = `当前从 ${info.shortName || info.name} 换算`;
+        els.editingNote.textContent = `${t("convertingFrom")} ${currencyShortName(state.anchorCode)}${t("convertingFromSuffix") ? ` ${t("convertingFromSuffix")}` : ""}`;
       }
 
       function pulseCard(code) {
@@ -647,32 +820,32 @@
           return `<article class="currency-card ${isAnchor ? "is-anchor" : ""} ${animate ? "card-enter" : ""}" style="--delay: ${index * 55}ms" data-card-code="${code}">
             <div class="card-head">
               <span class="currency-badge">${code}</span>
-              <span class="currency-copy"><strong>${info.shortName || info.name}</strong><span>${code} · 可输入 / 可换算</span></span>
-              <span class="anchor-label" data-role="anchor-label" ${isAnchor ? "" : "hidden"}>当前输入</span>
-              <button class="remove-btn" type="button" data-action="remove" data-code="${code}" ${state.codes.length === 1 ? "disabled" : ""} aria-label="移除 ${info.name}" title="${state.codes.length === 1 ? "至少保留一个币种" : `移除${info.name}`}" >×</button>
+              <span class="currency-copy"><strong>${currencyShortName(code)}</strong><span>${code} · ${t("currencyHint")}</span></span>
+              <span class="anchor-label" data-role="anchor-label" ${isAnchor ? "" : "hidden"}>${t("currentInput")}</span>
+              <button class="remove-btn" type="button" data-action="remove" data-code="${code}" ${state.codes.length === 1 ? "disabled" : ""} aria-label="${t("remove")} ${currencyName(code)}" title="${state.codes.length === 1 ? t("keepOne") : `${t("remove")}${currencyName(code)}`}" >×</button>
             </div>
-            <label class="currency-field-label" data-role="field-label" for="amount-${code}">${isAnchor ? "正在从这里换算" : "换算后的金额，也可以直接改写"}</label>
+            <label class="currency-field-label" data-role="field-label" for="amount-${code}">${isAnchor ? `${t("convertingFrom")} ${currencyShortName(code)}${t("convertingFromSuffix") ? ` ${t("convertingFromSuffix")}` : ""}` : t("convertingAmount")}</label>
             <div class="currency-input-wrap">
               <span class="currency-symbol">${info.symbol}</span>
-              <input class="currency-amount-input" id="amount-${code}" data-action="input" data-code="${code}" inputmode="decimal" autocomplete="off" spellcheck="false" value="${inputValue}" aria-label="${info.name}金额" />
+              <input class="currency-amount-input" id="amount-${code}" data-action="input" data-code="${code}" inputmode="decimal" autocomplete="off" spellcheck="false" value="${inputValue}" aria-label="${currencyName(code)}${t("amountSuffix")}" />
               <span class="currency-code">${code}</span>
             </div>
-            <div class="compact-line"><span class="compact-label">易读</span><strong data-role="compact-value">${compact.value}</strong><span class="compact-unit" data-role="compact-unit">${compact.unit}</span></div>
+            <div class="compact-line"><span class="compact-label">${t("readable")}</span><strong data-role="compact-value">${compact.value}</strong><span class="compact-unit" data-role="compact-unit">${compact.unit}</span></div>
             <p class="card-rate" data-role="card-rate">1 ${state.anchorCode} ≈ <strong>${formatRate(rate)} ${code}</strong></p>
-            <div class="shortcut-label"><span>快捷单位</span><button class="copy-card-btn" type="button" data-action="copy" data-code="${code}">复制精确值</button></div>
+            <div class="shortcut-label"><span>${t("shortcutUnits")}</span><button class="copy-card-btn" type="button" data-action="copy" data-code="${code}">${t("copyExact")}</button></div>
             <div class="card-shortcuts">${shortcuts}</div>
           </article>`;
         }).join("");
 
         const canAdd = state.codes.length < 4;
         const available = SUPPORTED_CODES.filter((code) => !state.codes.includes(code));
-        const options = available.map((code) => `<option value="${code}">${code} · ${CURRENCIES[code].name}</option>`).join("");
+        const options = available.map((code) => `<option value="${code}">${code} · ${currencyName(code)}</option>`).join("");
         const addCard = canAdd ? `<article class="currency-card add-currency-card ${animate ? "card-enter" : ""}" style="--delay: ${state.codes.length * 55}ms">
           <span class="plus-mark">+</span>
-          <h3>添加第 ${state.codes.length + 1} 个币种</h3>
-          <p>需要时再加入新加坡元、印尼盾、泰铢或越南盾。</p>
-          <label class="sr-only" for="addCurrency">选择要添加的币种</label>
-          <select class="optional-select" id="addCurrency"><option value="">选择币种</option>${options}</select>
+          <h3>${t("addCurrencyTitle").replace("{n}", state.codes.length + 1)}</h3>
+          <p>${t("addCurrencyDescription")}</p>
+          <label class="sr-only" for="addCurrency">${t("selectCurrency")}</label>
+          <select class="optional-select" id="addCurrency"><option value="">${t("selectCurrency")}</option>${options}</select>
         </article>` : "";
 
         els.currencyGrid.innerHTML = cards + addCard;
@@ -703,7 +876,7 @@
           const compactUnit = card.querySelector('[data-role="compact-unit"]');
           const rateLabel = card.querySelector('[data-role="card-rate"]');
           if (input) input.value = isAnchor ? (state.rawInputs[code] ?? formatInputAmount(amount, code)) : formatInputAmount(amount, code);
-          if (fieldLabel) fieldLabel.textContent = isAnchor ? "正在从这里换算" : "换算后的金额，也可以直接改写";
+          if (fieldLabel) fieldLabel.textContent = isAnchor ? `${t("convertingFrom")} ${currencyShortName(code)}${t("convertingFromSuffix") ? ` ${t("convertingFromSuffix")}` : ""}` : t("convertingAmount");
           if (anchorLabel) anchorLabel.hidden = !isAnchor;
           if (compactValue) compactValue.textContent = compact.value;
           if (compactUnit) compactUnit.textContent = compact.unit;
@@ -772,23 +945,23 @@
         els.statusDot.className = `status-dot ${mode}`;
         els.livePill.className = `live-pill ${mode}`;
         els.rateStatus.textContent = text;
-        els.livePillText.textContent = mode === "loading" ? "正在同步汇率" : mode === "offline" ? "使用最近数据" : "汇率已同步";
+        els.livePillText.textContent = mode === "loading" ? t("syncing") : mode === "offline" ? t("useRecentData") : t("synced");
       }
 
       function formatUpdateTime(value) {
-        if (!value) return "暂未获取更新时间";
+        if (!value) return t("noUpdate");
         const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return "更新时间未知";
-        return date.toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        if (Number.isNaN(date.getTime())) return t("unknownUpdate");
+        return date.toLocaleString(language === "en" ? "en-US" : "zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
       }
 
       function showRateStatus() {
         if (state.source === "fallback") {
-          setStatus("offline", "暂时无法连接汇率源，当前为内置最近参考值");
+          setStatus("offline", t("unableToConnect"));
           return;
         }
-        const prefix = state.source === "cached" ? "已使用本机缓存 · " : "今日基准汇率 · ";
-        setStatus("", `${prefix}${formatUpdateTime(state.updated)} 更新`);
+        const prefix = state.source === "cached" ? t("cachedPrefix") : t("todayPrefix");
+        setStatus("", `${prefix}${formatUpdateTime(state.updated)} ${t("updateSuffix")}`);
       }
 
       function applyRatePayload(payload, source) {
@@ -804,7 +977,7 @@
       async function loadRates(force = false) {
         state.loading = true;
         els.refreshBtn.classList.add("is-loading");
-        setStatus("loading", "正在获取最新基准汇率…");
+        setStatus("loading", t("fetchingLatest"));
         let cached = null;
         try { cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); } catch (error) { cached = null; }
         const isFresh = cached?.savedAt && Date.now() - cached.savedAt < CACHE_TTL;
@@ -859,11 +1032,11 @@
           const exact = `${CURRENCIES[code].symbol} ${formatInputAmount(amount, code)}`;
           try {
             await navigator.clipboard.writeText(exact);
-            button.textContent = "已复制";
-            window.setTimeout(() => { button.textContent = "复制精确值"; }, 1300);
+            button.textContent = t("copied");
+            window.setTimeout(() => { button.textContent = t("copyExact"); }, 1300);
           } catch (error) {
-            button.textContent = "请手动复制";
-            window.setTimeout(() => { button.textContent = "复制精确值"; }, 1300);
+            button.textContent = t("manualCopy");
+            window.setTimeout(() => { button.textContent = t("copyExact"); }, 1300);
           }
         }
       });
@@ -874,8 +1047,33 @@
 
       els.refreshBtn.addEventListener("click", () => loadRates(true));
 
+      function updateStaticLanguage() {
+        document.documentElement.lang = language === "en" ? "en" : "zh-CN";
+        document.title = t("pageTitle");
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          element.textContent = t(element.dataset.i18n);
+        });
+        document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+          element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+        });
+        const languageToggle = document.querySelector("#languageToggle");
+        if (languageToggle) {
+          languageToggle.textContent = language === "zh" ? "EN" : "中";
+          languageToggle.setAttribute("aria-label", language === "zh" ? "切换为英文" : "Switch to Chinese");
+          languageToggle.setAttribute("aria-pressed", String(language === "en"));
+        }
+        renderCurrencyGrid("", false);
+        showRateStatus();
+      }
+
+      document.querySelector("#languageToggle").addEventListener("click", () => {
+        language = language === "zh" ? "en" : "zh";
+        localStorage.setItem("fx-flip-language", language);
+        updateStaticLanguage();
+      });
+
       saveCodes();
-      renderCurrencyGrid();
+      updateStaticLanguage();
       loadRates();
     </script>
   </body>
