@@ -272,7 +272,8 @@
         background-position: center;
         background-size: cover;
         content: "";
-        opacity: 0.54;
+        filter: saturate(0.92) contrast(1.06);
+        opacity: 0.74;
         pointer-events: none;
         transition: opacity 180ms ease, transform 500ms ease;
       }
@@ -280,11 +281,11 @@
       .currency-card--CNY { --currency-bg: url("./assets/currency-cny.jpg"); }
       .currency-card--USD { --currency-bg: url("./assets/currency-usd.jpg"); }
       .currency-card--MYR { --currency-bg: url("./assets/currency-myr.jpg"); }
-      .currency-card--IDR,
-      .currency-card--SGD,
-      .currency-card--THB,
-      .currency-card--VND,
-      .currency-card--EUR { --currency-bg: url("./assets/currency-sea.jpg"); }
+      .currency-card--IDR { --currency-bg: url("./assets/currency-idr.jpg"); }
+      .currency-card--SGD { --currency-bg: url("./assets/currency-sgd.jpg"); }
+      .currency-card--THB { --currency-bg: url("./assets/currency-thb.jpg"); }
+      .currency-card--VND { --currency-bg: url("./assets/currency-vnd.jpg"); }
+      .currency-card--EUR { --currency-bg: url("./assets/currency-eur.jpg"); }
 
       .currency-card > * { position: relative; z-index: 1; }
 
@@ -305,7 +306,7 @@
       }
 
       .currency-card:hover { border-color: #c4d0e5; box-shadow: 0 16px 35px rgba(35, 54, 89, 0.09); transform: translateY(-4px); }
-      .currency-card:hover::before { opacity: 0.68; transform: scale(1.025); }
+      .currency-card:hover::before { opacity: 0.84; transform: scale(1.025); }
       .currency-card.is-anchor { border-color: #aebeff; box-shadow: 0 0 0 3px rgba(69, 102, 237, 0.08), 0 14px 32px rgba(35, 54, 89, 0.07); }
       .currency-card.is-updated .currency-input-wrap { animation: valuePulse 600ms ease both; }
 
@@ -349,7 +350,8 @@
         padding: 0 13px;
         border: 1.5px solid #cfd9ee;
         border-radius: 16px;
-        background: #fff;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(4px);
         transition: border-color 160ms ease, box-shadow 160ms ease;
       }
 
