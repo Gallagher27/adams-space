@@ -251,6 +251,7 @@
 
       .currency-card {
         --delay: 0ms;
+        --currency-bg: none;
         position: relative;
         min-width: 0;
         min-height: 285px;
@@ -263,12 +264,37 @@
         transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
       }
 
+      .currency-card::before {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-image: var(--currency-bg);
+        background-position: center;
+        background-size: cover;
+        content: "";
+        opacity: 0.54;
+        pointer-events: none;
+        transition: opacity 180ms ease, transform 500ms ease;
+      }
+
+      .currency-card--CNY { --currency-bg: url("./assets/currency-cny.jpg"); }
+      .currency-card--USD { --currency-bg: url("./assets/currency-usd.jpg"); }
+      .currency-card--MYR { --currency-bg: url("./assets/currency-myr.jpg"); }
+      .currency-card--IDR,
+      .currency-card--SGD,
+      .currency-card--THB,
+      .currency-card--VND,
+      .currency-card--EUR { --currency-bg: url("./assets/currency-sea.jpg"); }
+
+      .currency-card > * { position: relative; z-index: 1; }
+
       .currency-card.card-enter { animation: cardIn 500ms var(--delay) both cubic-bezier(0.2, 0.8, 0.2, 1); }
 
       .currency-card::after {
         position: absolute;
         top: -37px;
         right: -33px;
+        z-index: 0;
         width: 94px;
         height: 94px;
         border: 1px solid rgba(69, 102, 237, 0.11);
@@ -279,6 +305,7 @@
       }
 
       .currency-card:hover { border-color: #c4d0e5; box-shadow: 0 16px 35px rgba(35, 54, 89, 0.09); transform: translateY(-4px); }
+      .currency-card:hover::before { opacity: 0.68; transform: scale(1.025); }
       .currency-card.is-anchor { border-color: #aebeff; box-shadow: 0 0 0 3px rgba(69, 102, 237, 0.08), 0 14px 32px rgba(35, 54, 89, 0.07); }
       .currency-card.is-updated .currency-input-wrap { animation: valuePulse 600ms ease both; }
 
@@ -817,7 +844,7 @@
           const rate = rateFor(code);
           const isAnchor = code === state.anchorCode;
           const shortcuts = shortcutConfig(code).map((item) => `<button class="shortcut-btn ${item.exponent === null ? "clear-btn" : ""}" type="button" data-action="scale" data-code="${code}" data-exponent="${item.exponent ?? "clear"}" title="${item.title}">${item.label}</button>`).join("");
-          return `<article class="currency-card ${isAnchor ? "is-anchor" : ""} ${animate ? "card-enter" : ""}" style="--delay: ${index * 55}ms" data-card-code="${code}">
+          return `<article class="currency-card currency-card--${code} ${isAnchor ? "is-anchor" : ""} ${animate ? "card-enter" : ""}" style="--delay: ${index * 55}ms" data-card-code="${code}">
             <div class="card-head">
               <span class="currency-badge">${code}</span>
               <span class="currency-copy"><strong>${currencyShortName(code)}</strong><span>${code} · ${t("currencyHint")}</span></span>
