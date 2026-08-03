@@ -1,0 +1,8 @@
+{
+  "name": "adams-space",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "preview": "python3 -m http.server 4173"
+  }
+}
