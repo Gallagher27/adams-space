@@ -30,12 +30,15 @@
         <span class="brand-mark">✦</span>
         <span class="brand-copy">
           <span class="brand-title">Adam&#39;s Space</span>
-          <span class="brand-subtitle">一个持续生长的个人主站，用来放个人简介、项目入口，以及后续慢慢补进来的新页面。</span>
+          <span class="brand-subtitle"><span class="lang-copy" data-language="zh">个人主页</span><span class="lang-copy" data-language="en" hidden>Personal space</span></span>
         </span>
       </a>
-      <nav class="nav-pills" aria-label="Primary">
-        <a class="nav-pill" href="../">Home</a><a class="nav-pill is-active" href="../about/">About</a><a class="nav-pill" href="../projects/">Projects</a><a class="nav-pill" href="../food-map/">KL Food</a><a class="nav-pill" href="../currency-converter/">FX</a>
-      </nav>
+      <div class="topbar-actions">
+        <nav class="nav-pills" aria-label="Primary">
+        <a class="nav-pill" href="../"><span class="lang-copy" data-language="zh">首页</span><span class="lang-copy" data-language="en" hidden>Home</span></a><a class="nav-pill is-active" href="../about/"><span class="lang-copy" data-language="zh">关于</span><span class="lang-copy" data-language="en" hidden>About</span></a><a class="nav-pill" href="../projects/"><span class="lang-copy" data-language="zh">项目</span><span class="lang-copy" data-language="en" hidden>Projects</span></a><a class="nav-pill" href="../food-map/"><span class="lang-copy" data-language="zh">美食地图</span><span class="lang-copy" data-language="en" hidden>KL Food</span></a><a class="nav-pill" href="../currency-converter/"><span class="lang-copy" data-language="zh">汇率</span><span class="lang-copy" data-language="en" hidden>FX</span></a>
+        </nav>
+        <button class="language-toggle" type="button" data-language-toggle aria-pressed="false">EN</button>
+      </div>
     </header>
   
     
@@ -127,5 +130,32 @@
   
     <footer class="footer">© 2026 Adam · Built as a quiet home for projects that keep growing.</footer>
   </div>
+  <script>
+    (() => {
+      const storageKey = "adam-space-language";
+      const setLanguage = (language) => {
+        document.documentElement.lang = language === "en" ? "en" : "zh-CN";
+        document.querySelectorAll("[data-language]").forEach((node) => {
+          node.hidden = node.dataset.language !== language;
+        });
+        document.querySelectorAll("[data-language-toggle]").forEach((button) => {
+          const nextLanguage = language === "zh" ? "en" : "zh";
+          button.textContent = nextLanguage === "en" ? "EN" : "中";
+          button.setAttribute("aria-label", nextLanguage === "en" ? "Switch to English" : "切换为中文");
+          button.setAttribute("aria-pressed", String(language === "en"));
+        });
+      };
+
+      const savedLanguage = window.localStorage.getItem(storageKey);
+      setLanguage(savedLanguage === "en" ? "en" : "zh");
+      document.querySelectorAll("[data-language-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const nextLanguage = document.documentElement.lang === "en" ? "zh" : "en";
+          window.localStorage.setItem(storageKey, nextLanguage);
+          setLanguage(nextLanguage);
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

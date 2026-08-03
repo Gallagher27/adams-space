@@ -5,21 +5,69 @@ export const siteContent = {
     url: "https://gallagher.lol",
     description:
       "一个持续生长的个人主站，用来放个人简介、项目入口，以及后续慢慢补进来的新页面。",
+    tagline: {
+      zh: "个人主页",
+      en: "Personal space",
+    },
     footerNote: "Built as a quiet home for projects that keep growing.",
     locale: "zh_CN",
     themeColor: "#f7f6f3",
     year: "2026",
   },
   home: {
-    icon: "💡",
-    eyebrow: "Personal Hub",
-    title: "Adam's Space",
-    description:
-      "这里先放个人简介、KL Food，以及后面会继续接进来的其他项目。主站保持简洁，但内容会持续往里长。",
-    actions: [
-      { label: "Open Projects", path: "projects/", variant: "primary" },
-      { label: "Read About", path: "about/", variant: "secondary" },
-    ],
+    kicker: {
+      zh: "个人主页",
+      en: "PERSONAL SPACE",
+    },
+    title: {
+      zh: "你好，我是 Adam。",
+      en: "Hi, I'm Adam.",
+    },
+    description: {
+      zh: "我做地图、记录食物，也做一些简单实用的小网页。这里是我的个人介绍和项目入口。",
+      en: "I make maps, keep food notes, and build small useful web pages. This is my personal space and project shelf.",
+    },
+    location: {
+      label: {
+        zh: "现在在",
+        en: "Based in",
+      },
+      value: "Kuala Lumpur, Malaysia",
+    },
+    focus: {
+      label: {
+        zh: "正在做",
+        en: "Working on",
+      },
+      value: {
+        zh: "地图、食物记录和小工具",
+        en: "Maps, food notes, and small tools",
+      },
+    },
+    actions: {
+      projects: {
+        zh: "查看项目",
+        en: "View projects",
+      },
+      about: {
+        zh: "个人介绍",
+        en: "About me",
+      },
+    },
+    sectionLabels: {
+      profile: {
+        zh: "关于我",
+        en: "About me",
+      },
+      projects: {
+        zh: "项目",
+        en: "Selected projects",
+      },
+      open: {
+        zh: "打开",
+        en: "Open",
+      },
+    },
     stats: [
       { label: "Base", value: "Kuala Lumpur" },
       { label: "Current live project", value: "KL Food Map" },
@@ -80,6 +128,10 @@ export const siteContent = {
       featured: true,
       summary:
         "把自己在吉隆坡想记住的餐厅整理成一个可搜索、可筛选、可导航的互动地图。",
+      homeSummary: {
+        zh: "一个可以搜索、筛选和导航的吉隆坡美食地图。",
+        en: "A searchable, filterable food map for Kuala Lumpur.",
+      },
       detail:
         "这个项目既是记录工具，也是之后继续扩展其他城市或专题地图的雏形。现在已经可以按距离、评分和名称浏览，后面也能继续补更多收藏。",
       bullets: [
@@ -100,6 +152,10 @@ export const siteContent = {
       featured: false,
       summary:
         "一个可以从人民币、美元、马币或其他币种直接开始的相互换算工具。",
+      homeSummary: {
+        zh: "人民币、美元、马币和其他常用币种的相互换算。",
+        en: "Quick two-way conversion across everyday currencies.",
+      },
       detail:
         "支持常用数量单位快捷输入，所有币种平级展示，打开后可以主动刷新最新汇率。",
       bullets: [

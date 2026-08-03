@@ -132,6 +132,33 @@ function renderLayout({ title, description, currentPath, body }) {
     ${body}
     <footer class="footer">© ${escapeHtml(siteContent.site.year)} ${escapeHtml(siteContent.site.owner)} · ${escapeHtml(siteContent.site.footerNote)}</footer>
   </div>
+  <script>
+    (() => {
+      const storageKey = "adam-space-language";
+      const setLanguage = (language) => {
+        document.documentElement.lang = language === "en" ? "en" : "zh-CN";
+        document.querySelectorAll("[data-language]").forEach((node) => {
+          node.hidden = node.dataset.language !== language;
+        });
+        document.querySelectorAll("[data-language-toggle]").forEach((button) => {
+          const nextLanguage = language === "zh" ? "en" : "zh";
+          button.textContent = nextLanguage === "en" ? "EN" : "中";
+          button.setAttribute("aria-label", nextLanguage === "en" ? "Switch to English" : "切换为中文");
+          button.setAttribute("aria-pressed", String(language === "en"));
+        });
+      };
+
+      const savedLanguage = window.localStorage.getItem(storageKey);
+      setLanguage(savedLanguage === "en" ? "en" : "zh");
+      document.querySelectorAll("[data-language-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const nextLanguage = document.documentElement.lang === "en" ? "zh" : "en";
+          window.localStorage.setItem(storageKey, nextLanguage);
+          setLanguage(nextLanguage);
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
 `;
@@ -221,149 +248,119 @@ function renderTopbar(currentPath) {
         <span class="brand-mark">✦</span>
         <span class="brand-copy">
           <span class="brand-title">${escapeHtml(siteContent.site.title)}</span>
-          <span class="brand-subtitle">${escapeHtml(siteContent.site.description)}</span>
+          <span class="brand-subtitle">${langPair(siteContent.site.tagline.zh, siteContent.site.tagline.en)}</span>
         </span>
       </a>
-      <nav class="nav-pills" aria-label="Primary">
+      <div class="topbar-actions">
+        <nav class="nav-pills" aria-label="Primary">
         ${navItems
           .map((item) => {
             const activeClass = item.path === currentPath ? " is-active" : "";
-            return `<a class="nav-pill${activeClass}" href="${hrefFor(currentPath, item.path)}">${escapeHtml(item.label)}</a>`;
+            const labels = {
+              Home: ["首页", "Home"],
+              About: ["关于", "About"],
+              Projects: ["项目", "Projects"],
+              "KL Food": ["美食地图", "KL Food"],
+              FX: ["汇率", "FX"],
+            };
+            const [zh, en] = labels[item.label];
+            return `<a class="nav-pill${activeClass}" href="${hrefFor(currentPath, item.path)}">${langPair(zh, en)}</a>`;
           })
           .join("")}
-      </nav>
+        </nav>
+        <button class="language-toggle" type="button" data-language-toggle aria-pressed="false">EN</button>
+      </div>
     </header>
   `;
 }
 
 function renderHomePage() {
+  const homeProjects = siteContent.projects.filter((project) => project.slug !== "project-archive");
+
   return `
-    <section class="hero">
-      <div class="hero-icon">${escapeHtml(siteContent.home.icon)}</div>
-      <div class="eyebrow">${escapeHtml(siteContent.home.eyebrow)}</div>
-      <h1 class="page-title">${escapeHtml(siteContent.home.title)}</h1>
-      <p class="page-desc">${escapeHtml(siteContent.home.description)}</p>
-      <div class="hero-actions">
-        ${siteContent.home.actions
-          .map((action) => {
-            const variantClass =
-              action.variant === "primary" ? "button-primary" : "button-secondary";
-            return `<a class="button ${variantClass}" href="${hrefFor("", action.path)}">${escapeHtml(action.label)}</a>`;
-          })
-          .join("")}
-      </div>
-      <div class="hero-stats">
-        ${siteContent.home.stats
-          .map(
-            (stat) => `
-              <div class="stat-card">
-                <span class="stat-label">${escapeHtml(stat.label)}</span>
-                <span class="stat-value">${escapeHtml(stat.value)}</span>
-              </div>
-            `,
-          )
-          .join("")}
-      </div>
-    </section>
+    <main class="home-shell">
+      <section class="home-intro">
+        <div class="home-intro-main">
+          <div class="eyebrow">${langPair(siteContent.home.kicker.zh, siteContent.home.kicker.en)}</div>
+          <h1 class="home-title">${langPair(siteContent.home.title.zh, siteContent.home.title.en)}</h1>
+          <p class="home-lede">${langPair(siteContent.home.description.zh, siteContent.home.description.en)}</p>
+          <div class="home-actions">
+            <a class="button button-primary" href="${hrefFor("", "projects/")}">${langPair(siteContent.home.actions.projects.zh, siteContent.home.actions.projects.en)}</a>
+            <a class="text-link" href="${hrefFor("", "about/")}">${langPair(siteContent.home.actions.about.zh, siteContent.home.actions.about.en)} <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <aside class="home-aside" aria-label="Profile details">
+          <div class="home-aside-mark">✦</div>
+          <div class="home-aside-row">
+            <span>${langPair(siteContent.home.location.label.zh, siteContent.home.location.label.en)}</span>
+            <strong>${escapeHtml(siteContent.home.location.value)}</strong>
+          </div>
+          <div class="home-aside-row">
+            <span>${langPair(siteContent.home.focus.label.zh, siteContent.home.focus.label.en)}</span>
+            <strong>${langPair(siteContent.home.focus.value.zh, siteContent.home.focus.value.en)}</strong>
+          </div>
+        </aside>
+      </section>
 
-    <section class="grid grid-two">
-      <article class="section-card section-card--soft">
-        <h2 class="section-title"><span class="section-title-icon">👋</span>Personal Profile</h2>
-        ${siteContent.profile.shortIntro
-          .map((paragraph) => `<p class="section-copy">${escapeHtml(paragraph)}</p>`)
-          .join("")}
-        <div class="tag-list">
+      <section class="home-profile">
+        <div class="home-section-label">${langPair(siteContent.home.sectionLabels.profile.zh, siteContent.home.sectionLabels.profile.en)}</div>
+        <p>${langPair(
+          "我喜欢把生活里真正会用到的东西，整理成清楚、轻量、可以长期维护的网页。",
+          "I like turning useful parts of everyday life into clear, lightweight pages that can keep growing."
+        )}</p>
+        <div class="home-profile-tags">
           ${siteContent.profile.interests
-            .map((item) => `<span class="tag">${escapeHtml(item)}</span>`)
+            .slice(0, 4)
+            .map((item) => `<span>${escapeHtml(item)}</span>`)
             .join("")}
         </div>
-        <a class="button button-secondary button-inline" href="${hrefFor("", "about/")}">Read full profile</a>
-      </article>
+      </section>
 
-      <aside class="section-card">
-        <h2 class="section-title"><span class="section-title-icon">📌</span>Quick Facts</h2>
-        <div class="meta-list">
-          ${siteContent.profile.facts
-            .map(
-              (fact) => `
-                <div class="meta-row">
-                  <div class="meta-label">${escapeHtml(fact.label)}</div>
-                  <div class="meta-value">${escapeHtml(fact.value)}</div>
-                </div>
-              `,
-            )
+      <section class="home-projects">
+        <div class="home-section-heading">
+          <div>
+            <div class="home-section-label">${langPair(siteContent.home.sectionLabels.projects.zh, siteContent.home.sectionLabels.projects.en)}</div>
+            <h2>${langPair("正在做的事", "What I'm working on")}</h2>
+          </div>
+          <a class="text-link" href="${hrefFor("", "projects/")}">${langPair("查看全部", "View all")} <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="home-project-list">${homeProjects
+          .map((project, index) => renderHomeProject(project, index + 1))
+          .join("")}</div>
+      </section>
+
+      <section class="home-footer-note">
+        <span class="home-footer-dot"></span>
+        <span>${langPair("这个页面会随着新的项目慢慢更新。", "This page will grow as new projects come along.")}</span>
+      </section>
+    </main>
+  `;
+}
+
+function renderHomeProject(project, index) {
+  const number = String(index).padStart(2, "0");
+
+  return `
+    <article class="home-project-item">
+      <div class="home-project-number">${number}</div>
+      <div class="home-project-copy">
+        <div class="home-project-title-row">
+          <h3>${escapeHtml(project.title)}</h3>
+          <span class="home-project-status">${langPair("在线", "Live")}</span>
+        </div>
+        <p>${langPair(project.homeSummary.zh, project.homeSummary.en)}</p>
+        <div class="home-project-tags">
+          ${project.tags
+            .slice(0, 3)
+            .map((tag) => `<span>${escapeHtml(tag)}</span>`)
             .join("")}
         </div>
-      </aside>
-    </section>
-
-    <section class="section-card" style="margin-top: 20px;">
-      <h2 class="section-title"><span class="section-title-icon">🧭</span>Main Sections</h2>
-      <div class="link-grid">
-        ${siteContent.navigation
-          .map(
-            (item) => `
-              <a class="link-card" href="${hrefFor("", item.path)}">
-                <span class="link-card-icon">${escapeHtml(item.icon)}</span>
-                <div>
-                  <h3 class="link-card-title">${escapeHtml(item.title)}</h3>
-                  <p class="link-card-desc">${escapeHtml(item.description)}</p>
-                </div>
-              </a>
-            `,
-          )
-          .join("")}
       </div>
-    </section>
-
-    <section class="section-card converter-home-card" style="margin-top: 20px;">
-      <div>
-        <div class="converter-home-kicker"><span class="converter-home-dot"></span>Live utility</div>
-        <h2 class="section-title">汇率转换</h2>
-        <p class="section-copy">从任意一个币种开始，快速看懂人民币、美元、马币和其他常用币种之间的金额关系。</p>
-        <div class="tag-list">
-          <span class="tag">CNY</span>
-          <span class="tag">USD</span>
-          <span class="tag">MYR</span>
-          <span class="tag">主动刷新</span>
-        </div>
-        <a class="button button-primary button-inline" href="${hrefFor("", "currency-converter/")}">打开汇率转换</a>
-      </div>
-      <div class="converter-preview" aria-label="汇率转换预览">
-        <div class="converter-preview-header">
-          <span>From</span>
-          <span>To</span>
-        </div>
-        <div class="converter-preview-row">
-          <span class="converter-preview-code">CNY</span>
-          <strong>20 亿</strong>
-          <span class="converter-preview-arrow">→</span>
-          <span class="converter-preview-result"><strong>295.87 M</strong><small>USD</small></span>
-        </div>
-        <div class="converter-preview-row">
-          <span class="converter-preview-code">MYR</span>
-          <strong>1.21 B</strong>
-          <span class="converter-preview-arrow">→</span>
-          <span class="converter-preview-result"><strong>178.62 M</strong><small>USD</small></span>
-        </div>
-        <div class="converter-preview-note">四个币种平级输入 · 页面内独立运行</div>
-      </div>
-    </section>
-
-    <section class="section-card" style="margin-top: 20px;">
-      <h2 class="section-title"><span class="section-title-icon">🌟</span>Featured Project</h2>
-      ${renderFeaturedProject(featuredProject, "")}
-    </section>
-
-    <section class="section-card" style="margin-top: 20px;">
-      <h2 class="section-title"><span class="section-title-icon">🗂️</span>Project Shelf</h2>
-      <p class="section-copy">${escapeHtml(siteContent.projectShelfNote)}</p>
-      <div class="project-grid">
-        ${siteContent.projects
-          .map((project) => renderProjectListCard(project, ""))
-          .join("")}
-      </div>
-    </section>
+      <a class="home-project-link" href="${hrefFor("", project.path)}" aria-label="${escapeHtml(project.title)}">
+        <span>${langPair("打开", "Open")}</span>
+        <span aria-hidden="true">↗</span>
+      </a>
+    </article>
   `;
 }
 
@@ -556,6 +553,12 @@ function absoluteUrl(targetPath) {
   }
 
   return `${siteUrl}/${targetPath.replace(/^\/+/, "")}`;
+}
+
+function langPair(zh, en, className = "") {
+  const extraClass = className ? ` ${className}` : "";
+
+  return `<span class="lang-copy${extraClass}" data-language="zh">${escapeHtml(zh)}</span><span class="lang-copy${extraClass}" data-language="en" hidden>${escapeHtml(en)}</span>`;
 }
 
 function escapeHtml(value) {
