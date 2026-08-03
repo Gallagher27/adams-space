@@ -24,8 +24,8 @@ export const siteContent = {
       en: "Hi, I'm Adam.",
     },
     description: {
-      zh: "我做地图、记录食物，也做一些简单实用的小网页。这里是我的个人介绍和项目入口。",
-      en: "I make maps, keep food notes, and build small useful web pages. This is my personal space and project shelf.",
+      zh: "这里是我的个人介绍和项目入口。",
+      en: "This is my personal space and project shelf.",
     },
     location: {
       label: {
