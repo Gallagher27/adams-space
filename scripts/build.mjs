@@ -34,7 +34,7 @@ const pages = [
   {
     output: path.join("projects", "index.html"),
     title: `Projects - ${siteContent.site.title}`,
-    description: "项目入口页，当前以 KL Food Map 为主，后续会继续扩展。",
+    description: "项目入口页，当前包含 KL Food Map 和 Voice Lab，后续会继续扩展。",
     currentPath: "projects/",
     priority: "0.9",
     body: renderProjectsPage(),
@@ -361,7 +361,7 @@ function renderHomeProject(project, index) {
         <span aria-hidden="true">↗</span>
       </a>
     </article>
-  `;
+  `.trim();
 }
 
 function renderAboutPage() {
@@ -408,7 +408,7 @@ function renderAboutPage() {
       <h2 class="section-title"><span class="section-title-icon">🏠</span>${langPair("为什么有这个网站", "Why this site exists")}</h2>
       <p class="section-copy">${langPair("主站会一直保持比较轻的 Notion 风格，不追求过度包装，而是把个人信息和项目入口组织得更清楚。", "The site stays light and Notion-like: less packaging, clearer personal information, and easier project entry points.")}</p>
       <p class="section-copy">${langPair("未来如果有新的地图页、工具页、实验页或其他独立小站，都会继续挂到这里，主站就像一个持续更新的目录。", "New maps, tools, experiments, and standalone sites can keep joining this page, turning it into a living directory.")}</p>
-      <div class="callout">${langPair("现在先放个人简介和 KL Food Map，后面再按同样方式往里接新项目，不需要重做整站结构。", "The profile and KL Food Map are the starting point. New projects can be added without rebuilding the site structure.")}</div>
+      <div class="callout">${langPair("现在先放个人简介、KL Food Map 和 Voice Lab，后面再按同样方式往里接新项目，不需要重做整站结构。", "The profile, KL Food Map, and Voice Lab are the starting point. New projects can be added without rebuilding the site structure.")}</div>
     </section>
 
     <section class="section-card" style="margin-top: 20px;">
@@ -439,7 +439,7 @@ function renderProjectsPage() {
       <div class="hero-icon">🛠️</div>
       <div class="eyebrow">${langPair("项目", "PROJECTS")}</div>
       <h1 class="page-title">${langPair("项目入口", "Project shelf")}</h1>
-      <p class="page-desc">${langPair("这里会收纳当前项目和后续新增的小站。现在先以 KL Food Map 为主，后面继续往这个集合里追加。", "A home for current work and future sites. KL Food Map is the first entry, with more to come.")}</p>
+      <p class="page-desc">${langPair("这里会收纳当前项目和后续新增的小站。现在先从 KL Food Map 和 Voice Lab 开始，后面继续往这个集合里追加。", "A home for current work and future sites. KL Food Map and Voice Lab are the starting entries, with more to come.")}</p>
     </section>
 
     <section class="section-card">
@@ -529,7 +529,7 @@ function renderProjectListCard(project, currentPath) {
       <p class="section-copy" style="margin: 0;">${langPair(project.detail.zh, project.detail.en)}</p>
       <a class="button button-secondary" href="${hrefFor(currentPath, project.path)}">${langPair(project.ctaLabel.zh, project.ctaLabel.en)}</a>
     </article>
-  `;
+  `.trim();
 }
 
 function hrefFor(currentPath, targetPath) {

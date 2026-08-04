@@ -193,6 +193,34 @@ export const siteContent = {
       ctaLabel: { zh: "打开转换器", en: "Open converter" },
     },
     {
+      slug: "voice-lab",
+      icon: "🎙️",
+      title: { zh: "Voice Lab 演讲训练", en: "Voice Lab" },
+      status: { zh: "在线", en: "Live" },
+      kind: { zh: "训练工具", en: "Training tool" },
+      path: "https://voice-lab.gallagher.lol/",
+      featured: false,
+      summary: {
+        zh: "把英文演讲稿转换成更自然的朗读音频，并配合分段、高亮和历史记录进行练习。",
+        en: "A speech-training workspace for natural English narration, guided highlighting, and reusable practice history.",
+      },
+      homeSummary: {
+        zh: "英文演讲训练工具，支持自然朗读、分段高亮和历史复听。",
+        en: "English speech practice with natural narration, highlighting, and replayable history.",
+      },
+      detail: {
+        zh: "Voice Lab 是一个独立的演讲训练界面：输入英文后可以分段朗读，播放时同步高亮当前内容，并保留最近的练习记录。",
+        en: "Voice Lab is a focused speech-training workspace: paste English, practice it in sections, follow the live highlight, and keep recent sessions available for replay.",
+      },
+      bullets: [
+        { zh: "输入英文后按段落练习", en: "Practice English in focused sections" },
+        { zh: "朗读时同步高亮当前内容", en: "Follow the live reading highlight" },
+        { zh: "本地保留最近 50 条练习记录", en: "Keep the latest 50 practice sessions locally" },
+      ],
+      tags: ["Google Cloud TTS", "Speech Practice", "Next.js"],
+      ctaLabel: { zh: "开始练习", en: "Start practicing" },
+    },
+    {
       slug: "project-archive",
       icon: "…",
       title: { zh: "更多项目", en: "More Projects" },
@@ -218,7 +246,7 @@ export const siteContent = {
     },
   ],
   projectShelfNote: {
-    zh: "当前先放 KL Food Map，后面新增项目时，只要补一条项目数据，再把页面目录接进来就可以了。",
-    en: "KL Food Map is the first entry. New projects can be added by extending the same small project list.",
+    zh: "现在这里有 KL Food Map 和 Voice Lab，后面新增项目时，只要补一条项目数据，再把页面目录接进来就可以了。",
+    en: "KL Food Map and Voice Lab are now part of the shelf. New projects can be added by extending the same small project list.",
   },
 };
