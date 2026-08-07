@@ -1,0 +1,44 @@
+name: Validate Adams Home
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "assets/**"
+      - "content/**"
+      - "scripts/**"
+      - "templates/**"
+      - "package.json"
+      - "README.md"
+      - "docs/**"
+      - ".github/workflows/validate.yml"
+  pull_request:
+    paths:
+      - "apps/**"
+      - "assets/**"
+      - "content/**"
+      - "scripts/**"
+      - "templates/**"
+      - "package.json"
+      - "README.md"
+      - "docs/**"
+      - ".github/workflows/validate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Voice Lab dependencies
+        run: npm ci --prefix apps/voice-lab
+      - name: Run the complete project check
+        run: npm run verify

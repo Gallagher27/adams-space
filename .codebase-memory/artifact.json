@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
-    "commit": "e24e33ffda398257d2812b3bec69261b1d2672e6",
-    "indexed_at": "2026-08-07T01:21:09Z",
+    "commit": "d489c7d36066c9eb0743acb29a0de7118ae5c134",
+    "indexed_at": "2026-08-07T01:22:36Z",
     "project": "Users-adam-Documents-adams-space",
-    "nodes": 327,
-    "edges": 547,
-    "original_size": 1900544,
-    "compressed_size": 284329,
-    "compression_level": 9
+    "nodes": 346,
+    "edges": 533,
+    "original_size": 2490368,
+    "compressed_size": 316901,
+    "compression_level": 3
 }
