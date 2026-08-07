@@ -2,7 +2,10 @@
   "name": "adams-space",
   "private": true,
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "check:apps": "node scripts/check-apps.mjs",
+    "check:voice-lab": "npm --prefix apps/voice-lab run lint && npm --prefix apps/voice-lab test",
+    "build": "npm run check:apps && node scripts/build.mjs",
+    "verify": "npm run check:apps && npm run build && npm run check:voice-lab",
     "preview": "python3 -m http.server 4173"
   }
 }

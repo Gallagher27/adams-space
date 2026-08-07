@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { cp, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteContent } from "../content/site-content.mjs";
@@ -52,6 +52,8 @@ const staticRoutes = [
   },
 ];
 
+await syncStaticApps();
+
 await Promise.all(
   pages.map(async (page) => {
     const outputPath = path.join(rootDir, page.output);
@@ -87,6 +89,18 @@ await Promise.all([
 ]);
 
 console.log(`Built ${pages.length} pages and site metadata for ${siteContent.site.title}.`);
+
+async function syncStaticApps() {
+  const staticApps = siteContent.projects.filter((project) => project.sourceDir && project.runtime === "static");
+  await Promise.all(
+    staticApps.map(async (project) => {
+      await cp(path.join(rootDir, project.sourceDir), path.join(rootDir, project.path), {
+        recursive: true,
+        force: true,
+      });
+    }),
+  );
+}
 
 function renderLayout({ title, description, currentPath, body }) {
   const canonicalUrl = absoluteUrl(currentPath);

@@ -4,3 +4,10 @@
 !.dev.vars.example
 .env*
 !.env.example
+
+# App-local generated files
+apps/*/node_modules/
+apps/*/dist/
+apps/*/.wrangler/
+apps/*/.vinext/
+apps/*/build/

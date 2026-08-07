@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>吉隆坡美食地图</title>
+  <meta name="description" content="Adam's Space 里的吉隆坡美食地图，用来记录、搜索和浏览值得回访的餐厅。" />
+  <meta name="theme-color" content="#f7f6f3" />
+  <meta name="color-scheme" content="light" />
+  <link rel="canonical" href="https://gallagher.lol/food-map/" />
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <meta property="og:site_name" content="Adam's Space" />
+  <meta property="og:title" content="吉隆坡美食地图 - Adam's Space" />
+  <meta property="og:description" content="一个可以搜索、筛选和导航的吉隆坡美食地图。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://gallagher.lol/food-map/" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="吉隆坡美食地图 - Adam's Space" />
+  <meta name="twitter:description" content="一个可以搜索、筛选和导航的吉隆坡美食地图。" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"吉隆坡美食地图","url":"https://gallagher.lol/food-map/","applicationCategory":"MapApplication","isPartOf":{"@type":"WebSite","name":"Adam's Space","url":"https://gallagher.lol/"}}</script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow: hidden; background: #fef9f0; }
+
+    .app { display: flex; height: 100%; }
+
+    /* 侧边栏 - 卡通暖色风 */
+    .panel {
+      width: 340px; min-width: 340px;
+      height: 100%;
+      background: #fffcf5;
+      border-right: 2px solid #ffe4c9;
+      display: flex; flex-direction: column;
+      transition: margin-left 0.3s ease;
+      position: relative; z-index: 10;
+    }
+    .panel.collapsed { margin-left: -296px; }
+
+    .panel-header {
+      padding: 16px; border-bottom: 2px solid #ffe4c9; flex-shrink: 0;
+      background: linear-gradient(135deg, #fff5e6 0%, #fffcf5 100%);
+    }
+    .panel-home {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-bottom: 12px; padding: 6px 12px;
+      border-radius: 999px; border: 2px solid #ffe4c9;
+      background: #fff; color: #c45a11; text-decoration: none;
+      font-size: 12px; font-weight: 800;
+    }
+    .panel-home:hover { background: #fff5e6; }
+    .panel-header h1 { font-size: 20px; font-weight: 800; color: #d4520a; }
+    .panel-header input {
+      width: 100%; height: 38px; border: 2px solid #ffd6a8; border-radius: 20px;
+      padding: 0 16px; font-size: 13px; outline: none; background: #fff;
+    }
+    .panel-header input:focus { border-color: #ff8c42; box-shadow: 0 0 0 3px rgba(255,140,66,0.15); }
+    .filters { display: flex; gap: 8px; margin-top: 10px; }
+    .filters select {
+      flex: 1; height: 34px; border: 2px solid #ffd6a8; border-radius: 12px;
+      font-size: 12px; padding: 0 10px; background: #fff; color: #555;
+    }
+
+    .panel-list { flex: 1; overflow-y: auto; padding: 6px; }
+
+    .item {
+      padding: 12px 14px; cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 14px; margin-bottom: 6px;
+      transition: all 0.15s ease;
+      background: #fff;
+    }
+    .item:hover { background: #fff5eb; border-color: #ffd6a8; }
+    .item.active { background: #fff0e0; border-color: #ff8c42; box-shadow: 0 2px 8px rgba(255,140,66,0.15); }
+    .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .item-name { font-size: 14px; font-weight: 700; line-height: 1.3; color: #333; }
+    .item-dist { font-size: 12px; color: #0d9488; font-weight: 800; white-space: nowrap; }
+    .item-meta { font-size: 11.5px; color: #888; margin-top: 5px; }
+
+    /* 展开详情 */
+    .item-detail {
+      display: none; margin-top: 10px; padding-top: 10px;
+      border-top: 1px dashed #ffd6a8; font-size: 12px; color: #555;
+    }
+    .item.active .item-detail { display: block; }
+    .item-detail .d-row { margin-bottom: 5px; }
+    .item-detail .d-label { color: #aaa; display: inline-block; width: 45px; }
+    .item-detail a {
+      display: inline-block; margin-top: 8px; padding: 6px 14px;
+      background: linear-gradient(135deg, #ff8c42, #ff6b1a); color: #fff; border-radius: 20px;
+      text-decoration: none; font-size: 12px; font-weight: 700;
+      box-shadow: 0 2px 8px rgba(255,107,26,0.3);
+    }
+    .item-detail a:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,107,26,0.4); }
+
+    /* 收缩按钮 */
+    .toggle-btn {
+      position: absolute; right: -30px; top: 50%;
+      transform: translateY(-50%);
+      width: 30px; height: 60px;
+      background: #fffcf5; border: 2px solid #ffe4c9; border-left: none;
+      border-radius: 0 14px 14px 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: #d4520a; z-index: 11;
+    }
+    .toggle-btn:hover { background: #fff5e6; }
+
+    /* 地图区域 */
+    .map-area { flex: 1; position: relative; }
+    #gmap { width: 100%; height: 100%; background: #f0ebe3; }
+
+    /* 地图切换按钮 */
+    .map-style-btn {
+      position: absolute; right: 14px; bottom: 30px; z-index: 1000;
+      padding: 9px 16px; background: #fff; border: 2px solid #ffe4c9;
+      border-radius: 20px; font-size: 12px; font-weight: 700;
+      cursor: pointer; color: #d4520a;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: all 0.15s;
+    }
+    .map-style-btn:hover { background: #fff5e6; transform: translateY(-1px); }
+
+    /* 导入按钮 */
+    .import-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .import-btn {
+      padding: 6px 14px; background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+      color: #fff; border: none; border-radius: 20px; font-size: 12px;
+      font-weight: 700; cursor: pointer; white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(255,107,26,0.25);
+      transition: all 0.15s;
+    }
+    .import-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,107,26,0.35); }
+    .import-hint { font-size: 11px; color: #aaa; }
+
+    /* 手机端拉手条 - 桌面隐藏 */
+    .mobile-handle { display: none; }
+    /* 手机端浮动展开按钮 - 桌面隐藏 */
+    .mobile-expand-btn { display: none; }
+
+    @media (max-width: 600px) {
+      .app { flex-direction: column-reverse; }
+      .panel {
+        width: 100%; min-width: 100%; height: 55vh;
+        border-right: none; border-top: 2px solid #ffe4c9;
+        border-radius: 20px 20px 0 0;
+        transition: height 0.3s ease;
+      }
+      .panel.collapsed { height: 56px; overflow: hidden; }
+      .panel.collapsed .panel-header,
+      .panel.collapsed .panel-list { display: none; }
+      .toggle-btn { display: none; }
+      /* 手机端隐藏标题、搜索框、菜系筛选、导入 */
+      .panel-header h1 { display: none; }
+      .panel-header input[type="search"] { display: none; }
+      .panel-header .import-row { display: none; }
+      .panel-header {
+        padding: 8px 16px; border-bottom: 1px solid #ffe4c9;
+      }
+      .panel-home { margin-bottom: 8px; }
+      .filters { margin-top: 0; }
+      .filters #catFilter { display: none; }
+      .filters select { flex: none; width: 100%; }
+      .mobile-handle {
+        display: flex; align-items: center; justify-content: center;
+        padding: 12px; cursor: pointer; gap: 10px;
+        background: linear-gradient(135deg, #fff5e6 0%, #fffcf5 100%);
+        border-radius: 20px 20px 0 0;
+      }
+      .mobile-handle .handle-bar {
+        width: 44px; height: 5px; border-radius: 3px; background: #ffd6a8;
+      }
+      .mobile-handle .handle-text {
+        font-size: 14px; color: #d4520a; font-weight: 800;
+      }
+      /* 收起时拉手条更醒目 */
+      .panel.collapsed .mobile-handle {
+        background: linear-gradient(135deg, #ffe4c9 0%, #fff5e6 100%);
+        box-shadow: 0 -4px 12px rgba(212,82,10,0.1);
+        animation: pulse-handle 2s ease-in-out infinite;
+      }
+      @keyframes pulse-handle {
+        0%, 100% { box-shadow: 0 -4px 12px rgba(212,82,10,0.1); }
+        50% { box-shadow: 0 -4px 16px rgba(212,82,10,0.25); }
+      }
+      .panel.collapsed .mobile-handle .handle-bar {
+        background: #ff8c42;
+      }
+      .map-area { flex: 1; }
+      /* 地图样式按钮移到左下角，避免和缩放控件冲突 */
+      .map-style-btn {
+        right: auto; left: 14px; bottom: 14px;
+      }
+      /* 手机端浮动展开按钮 - 列表收起时显示在地图底部中央 */
+      .mobile-expand-btn {
+        display: none;
+        position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+        z-index: 1001;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+        color: #fff; border: none; border-radius: 24px;
+        font-size: 14px; font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(255,107,26,0.4);
+        animation: bounce-btn 2s ease-in-out infinite;
+      }
+      .mobile-expand-btn.visible { display: block; }
+      @keyframes bounce-btn {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-4px); }
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="app">
+  <div class="panel" id="panel">
+    <button class="toggle-btn" id="toggleBtn">‹</button>
+    <div class="mobile-handle" id="mobileHandle">
+      <span class="handle-bar"></span>
+      <span class="handle-text" id="handleText">收起列表 ▼</span>
+    </div>
+    <div class="panel-header">
+      <a class="panel-home" href="../">← 返回主站</a>
+      <h1>🍜 吉隆坡美食地图</h1>
+      <input id="search" type="search" placeholder="🔍 搜索餐厅、区域、菜系..." />
+      <div class="filters">
+        <select id="catFilter"><option value="">🍽️ 全部菜系</option></select>
+        <select id="sortBy">
+          <option value="nearest">📍 离我最近</option>
+          <option value="rating">⭐ 评分最高</option>
+          <option value="name">🔤 按名称</option>
+        </select>
+      </div>
+      <div class="import-row">
+        <button class="import-btn" id="importBtn">📂 导入收藏</button>
+        <span class="import-hint" id="importHint">支持 GeoJSON / JSON / CSV</span>
+        <input type="file" id="fileInput" accept=".json,.geojson,.csv" style="display:none" />
+      </div>
+    </div>
+    <div class="panel-list" id="list"></div>
+  </div>
+  <div class="map-area">
+    <div id="gmap"></div>
+    <button class="map-style-btn" id="mapStyleBtn">🗺️ 切换标准地图</button>
+    <button class="mobile-expand-btn" id="mobileExpandBtn">🍜 查看餐厅列表</button>
+  </div>
+</div>
+
+<script>
+// ===== 餐厅数据 =====
+const PLACES = [
+  { id:"hong-kee-claypot", name:"Hong Kee claypot chicken rice", area:"Chinatown", category:"广东风味", price:"RM 20-40", rating:3.8, lat:3.1442773, lng:101.6987981 },
+  { id:"shi-tian-claypot", name:"食添瓦煲鸡饭店", area:"Petaling Jaya", category:"鸡肉", price:"RM 1-20", rating:3.8, lat:3.06728, lng:101.6497283 },
+  { id:"shi-yue-tian-claypot", name:"食越添瓦煲鸡饭", area:"Petaling Jaya", category:"鸡肉", price:"RM 1-20", rating:4.0, lat:3.0576996, lng:101.6376537 },
+  { id:"new-ipoh-chicken-rice", name:"1977 New Ipoh Chicken Rice HQ", area:"Petaling Jaya", category:"中国风味", price:"RM 20-40", rating:3.9, lat:3.1068394, lng:101.6534213 },
+  { id:"hai-bin-seafood", name:"海滨海鲜楼", area:"Petaling Jaya", category:"蟹类菜品", price:"RM 40-140", rating:4.1, lat:3.098136, lng:101.6756964 },
+  { id:"heng-kee-bak-kut-teh", name:"興記肉骨茶", area:"Kepong", category:"中国风味", price:"RM 20-40", rating:4.1, lat:3.2139058, lng:101.6374145 },
+  { id:"icc-pudu", name:"ICC Pudu", area:"Pudu", category:"小贩中心", price:"RM 1-20", rating:4.0, lat:3.1380809, lng:101.7143347 },
+  { id:"nz-curry-house", name:"NZ咖喱屋", area:"KLCC", category:"印度穆斯林餐厅", price:"RM 1-20", rating:3.9, lat:3.1593572, lng:101.7096594 },
+  { id:"burgerboss", name:"BurgerBoss", area:"Bukit Bintang", category:"小贩档口", price:"RM 1-20", rating:4.6, lat:3.1446405, lng:101.7071322 },
+  { id:"friend-fries", name:"Friend Fries", area:"Bukit Bintang", category:"快餐", price:"RM 1-20", rating:4.8, lat:3.1474438, lng:101.7119593 },
+  { id:"naughty-babe-dirty-duck", name:"Naughty Babe Dirty Duck", area:"Desa Sri Hartamas", category:"烧烤", price:"RM 40-120", rating:4.1, lat:3.162473, lng:101.649636 },
+  { id:"craf-roasters-bbq", name:"Craf Roasters BBQ", area:"Kuala Lumpur", category:"烧烤", price:"RM 20-100", rating:4.6, lat:3.1852169, lng:101.6866302 },
+  { id:"borenos-fried-chicken", name:"Borenos Fried Chicken", area:"Damansara Uptown", category:"快餐", price:"RM 20-40", rating:4.6, lat:3.1373968, lng:101.6233797 },
+  { id:"al-amin-xinjiang", name:"Al-Amin 新疆风味餐厅", area:"Petaling Jaya", category:"清真风味", price:"RM 20-40", rating:4.2, lat:3.118503, lng:101.6287869 },
+  { id:"mamas-bun-stewed-fish", name:"咱妈烀饼 Mama's Bun", area:"Petaling Jaya", category:"餐馆", price:"RM 40-60", rating:4.7, lat:3.1145863, lng:101.6107796 }
+];
+
+let selectedId = null;
+let myLat = null, myLng = null;
+let gmap, gmarkers = {}, userMarker = null, infoWindow = null;
+
+// ===== 地图样式 =====
+// 简洁风格：只保留主干道和水域，隐藏一切杂乱信息
+const SIMPLE_STYLE = [
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.local', elementType: 'geometry', stylers: [{ color: '#f5f0e8' }] },
+  { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#fde8c8' }] },
+  { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#8a6d3b' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#ffc966' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#6b4c1e' }] },
+  { featureType: 'landscape', stylers: [{ color: '#faf6ee' }] },
+  { featureType: 'water', stylers: [{ color: '#c8e6f5' }] },
+  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.neighborhood', elementType: 'labels.text.fill', stylers: [{ color: '#b08850' }] }
+];
+
+// 标准风格也稍微简化一下（去掉 POI 图标）
+const STANDARD_STYLE = [
+  { featureType: 'poi', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] }
+];
+
+let useSimpleMap = true; // 默认简洁
+
+function initMap() {
+  gmap = new google.maps.Map(document.getElementById('gmap'), {
+    center: { lat: 3.14, lng: 101.69 },
+    zoom: 12,
+    disableDefaultUI: true,
+    zoomControl: true,
+    gestureHandling: 'greedy',
+    clickableIcons: false,
+    styles: SIMPLE_STYLE
+  });
+
+  infoWindow = new google.maps.InfoWindow();
+
+  // 给每个餐厅放标记 - 用食物 emoji 图标，无序号
+  PLACES.forEach(p => {
+    const marker = new google.maps.Marker({
+      position: { lat: p.lat, lng: p.lng },
+      map: gmap,
+      title: p.name,
+      icon: {
+        url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44"><defs><filter id="s" x="-20%" y="-10%" width="140%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/></filter></defs><path d="M18 0C10 0 4 6 4 13.5c0 10 14 23.5 14 23.5s14-13.5 14-23.5C32 6 26 0 18 0z" fill="#ff6b35" filter="url(#s)"/><circle cx="18" cy="13.5" r="8" fill="#fff"/><text x="18" y="17.5" text-anchor="middle" font-size="12">🍴</text></svg>`),
+        scaledSize: new google.maps.Size(36, 44),
+        anchor: new google.maps.Point(18, 44)
+      }
+    });
+    marker.addListener('click', () => {
+      selectedId = p.id;
+      // 手机端：点击标记自动展开列表面板
+      expandPanelIfMobile();
+      renderList();
+      showInfo(p, marker);
+      // 滚动左侧列表到对应项
+      setTimeout(() => {
+        const el = document.querySelector(`.item[data-id="${p.id}"]`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    });
+    gmarkers[p.id] = marker;
+  });
+
+  // 适配所有点
+  const bounds = new google.maps.LatLngBounds();
+  PLACES.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+  gmap.fitBounds(bounds, 50);
+
+  // 地图样式切换
+  document.getElementById('mapStyleBtn').addEventListener('click', () => {
+    useSimpleMap = !useSimpleMap;
+    gmap.setOptions({ styles: useSimpleMap ? SIMPLE_STYLE : STANDARD_STYLE });
+    document.getElementById('mapStyleBtn').textContent = useSimpleMap ? '🗺️ 切换标准地图' : '🎨 切换简洁地图';
+  });
+
+  // 尝试定位 - 用小人 emoji
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      myLat = pos.coords.latitude;
+      myLng = pos.coords.longitude;
+      userMarker = new google.maps.Marker({
+        position: { lat: myLat, lng: myLng },
+        map: gmap,
+        title: '我在这里',
+        icon: {
+          url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72"><circle cx="36" cy="36" r="34" fill="#4285f4" opacity="0.12"/><circle cx="36" cy="36" r="24" fill="#4285f4" opacity="0.2"/><circle cx="36" cy="36" r="14" fill="#fff" stroke="#4285f4" stroke-width="3"/><text x="36" y="42" text-anchor="middle" font-size="20">🧑</text></svg>`),
+          scaledSize: new google.maps.Size(72, 72),
+          anchor: new google.maps.Point(36, 36)
+        },
+        zIndex: 1000
+      });
+      renderList();
+    }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+  }
+
+  renderList();
+}
+
+function showInfo(p, marker) {
+  const d = formatDist(dist(p));
+  infoWindow.setContent(`<div style="font-family:Nunito,sans-serif;font-size:13px;max-width:200px;padding:4px">
+    <b style="font-size:14px;color:#d4520a">${esc(p.name)}</b><br>
+    <span style="color:#666">${esc(p.area)} · ${esc(p.category)}</span><br>
+    <span style="color:#0d9488;font-weight:800">${d}</span> · ⭐${p.rating}
+  </div>`);
+  infoWindow.open(gmap, marker);
+}
+
+function highlightMarker(id) {
+  PLACES.forEach(p => {
+    const m = gmarkers[p.id];
+    if (p.id === id) {
+      // 选中：更大的蓝色标记
+      m.setIcon({
+        url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="44" height="54" viewBox="0 0 44 54"><defs><filter id="s" x="-20%" y="-10%" width="140%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.3"/></filter></defs><path d="M22 0C12 0 4 8 4 17c0 12.5 18 30 18 30s18-17.5 18-30C40 8 32 0 22 0z" fill="#4285f4" filter="url(#s)"/><circle cx="22" cy="17" r="10" fill="#fff"/><text x="22" y="22" text-anchor="middle" font-size="14">⭐</text></svg>`),
+        scaledSize: new google.maps.Size(44, 54),
+        anchor: new google.maps.Point(22, 54)
+      });
+      m.setZIndex(999);
+    } else {
+      // 默认：橙色标记
+      m.setIcon({
+        url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44"><defs><filter id="s" x="-20%" y="-10%" width="140%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/></filter></defs><path d="M18 0C10 0 4 6 4 13.5c0 10 14 23.5 14 23.5s14-13.5 14-23.5C32 6 26 0 18 0z" fill="#ff6b35" filter="url(#s)"/><circle cx="18" cy="13.5" r="8" fill="#fff"/><text x="18" y="17.5" text-anchor="middle" font-size="12">🍴</text></svg>`),
+        scaledSize: new google.maps.Size(36, 44),
+        anchor: new google.maps.Point(18, 44)
+      });
+      m.setZIndex(1);
+    }
+  });
+}
+
+// ===== 侧边栏逻辑 =====
+const panel = document.getElementById('panel');
+const toggleBtn = document.getElementById('toggleBtn');
+const searchInput = document.getElementById('search');
+const catFilter = document.getElementById('catFilter');
+const sortBy = document.getElementById('sortBy');
+const listEl = document.getElementById('list');
+
+// 填充菜系
+const cats = [...new Set(PLACES.map(p => p.category))].sort();
+cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; catFilter.appendChild(o); });
+
+toggleBtn.addEventListener('click', () => {
+  panel.classList.toggle('collapsed');
+  toggleBtn.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
+});
+
+// 手机端拉手条
+document.getElementById('mobileHandle').addEventListener('click', () => {
+  panel.classList.toggle('collapsed');
+  updateMobileUI();
+});
+
+// 手机端浮动展开按钮
+document.getElementById('mobileExpandBtn').addEventListener('click', () => {
+  panel.classList.remove('collapsed');
+  updateMobileUI();
+});
+
+function updateMobileUI() {
+  const collapsed = panel.classList.contains('collapsed');
+  document.getElementById('handleText').textContent = collapsed ? '👆 点击展开餐厅列表' : '收起列表 ▼';
+  document.getElementById('mobileExpandBtn').classList.toggle('visible', collapsed);
+}
+
+// 手机端：自动展开面板（如果当前是收起状态）
+function expandPanelIfMobile() {
+  if (window.innerWidth <= 600 && panel.classList.contains('collapsed')) {
+    panel.classList.remove('collapsed');
+    updateMobileUI();
+  }
+}
+
+searchInput.addEventListener('input', renderList);
+catFilter.addEventListener('change', renderList);
+sortBy.addEventListener('change', renderList);
+
+function renderList() {
+  const q = searchInput.value.trim().toLowerCase();
+  const cat = catFilter.value;
+  const sort = sortBy.value;
+
+  let items = PLACES.filter(p => {
+    if (cat && p.category !== cat) return false;
+    if (q && !(p.name.toLowerCase().includes(q) || p.area.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  if (sort === 'nearest') items.sort((a, b) => dist(a) - dist(b));
+  else if (sort === 'rating') items.sort((a, b) => (b.rating||0) - (a.rating||0));
+  else items.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+
+  listEl.innerHTML = items.map(p => {
+    const active = p.id === selectedId ? ' active' : '';
+    const d = formatDist(dist(p));
+    return `<div class="item${active}" data-id="${p.id}">
+      <div class="item-top">
+        <span class="item-name">🍴 ${esc(p.name)}</span>
+        <span class="item-dist">${d}</span>
+      </div>
+      <div class="item-meta">${esc(p.area)} · ${esc(p.category)} · ⭐${p.rating||'-'} · ${esc(p.price)}</div>
+      <div class="item-detail">
+        <div class="d-row"><span class="d-label">💰 价格</span>${esc(p.price)}</div>
+        <div class="d-row"><span class="d-label">⭐ 评分</span>${p.rating||'无'}</div>
+        <div class="d-row"><span class="d-label">📍 区域</span>${esc(p.area)}</div>
+        <a href="https://www.google.com/maps/search/${encodeURIComponent(p.name)}/@${p.lat},${p.lng},17z" target="_blank" rel="noopener">🗺️ 在 Google Maps 打开</a>
+      </div>
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.item').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      selectedId = (selectedId === id) ? null : id;
+      renderList();
+      if (selectedId) {
+        const p = PLACES.find(x => x.id === selectedId);
+        if (p && gmap) {
+          gmap.panTo({ lat: p.lat, lng: p.lng });
+          gmap.setZoom(15);
+          showInfo(p, gmarkers[p.id]);
+        }
+      } else {
+        if (infoWindow) infoWindow.close();
+      }
+      highlightMarker(selectedId);
+    });
+  });
+
+  highlightMarker(selectedId);
+}
+
+// ===== 工具函数 =====
+function dist(p) {
+  if (myLat == null) return Infinity;
+  const R = 6371, dLat = (p.lat-myLat)*Math.PI/180, dLng = (p.lng-myLng)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(myLat*Math.PI/180)*Math.cos(p.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function formatDist(km) {
+  if (!isFinite(km)) return '—';
+  return km < 1 ? Math.round(km*1000)+' m' : km.toFixed(1)+' km';
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== 导入功能 =====
+document.getElementById('importBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', handleImport);
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const text = ev.target.result;
+      let imported;
+      if (file.name.endsWith('.csv')) {
+        imported = parseCsv(text);
+      } else {
+        const json = JSON.parse(text);
+        imported = parseJson(json);
+      }
+      if (!imported.length) {
+        alert('没有找到有效地点数据。请确保文件包含名称和坐标信息。');
+        return;
+      }
+      // 合并到现有列表（去重按坐标）
+      const existing = new Set(PLACES.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`));
+      let added = 0;
+      imported.forEach(p => {
+        const key = `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
+        if (!existing.has(key)) {
+          PLACES.push(p);
+          existing.add(key);
+          added++;
+          // 在地图上加标记
+          addMarkerForPlace(p);
+        }
+      });
+      // 更新菜系筛选
+      updateCatFilter();
+      renderList();
+      // 适配地图到所有点
+      const bounds = new google.maps.LatLngBounds();
+      PLACES.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+      gmap.fitBounds(bounds, 50);
+      document.getElementById('importHint').textContent = `✅ 导入了 ${added} 个新地点`;
+      setTimeout(() => { document.getElementById('importHint').textContent = '支持 GeoJSON / JSON / CSV'; }, 4000);
+    } catch (err) {
+      alert('文件解析失败: ' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function addMarkerForPlace(p) {
+  const marker = new google.maps.Marker({
+    position: { lat: p.lat, lng: p.lng },
+    map: gmap,
+    title: p.name,
+    icon: {
+      url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44"><defs><filter id="s" x="-20%" y="-10%" width="140%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/></filter></defs><path d="M18 0C10 0 4 6 4 13.5c0 10 14 23.5 14 23.5s14-13.5 14-23.5C32 6 26 0 18 0z" fill="#ff6b35" filter="url(#s)"/><circle cx="18" cy="13.5" r="8" fill="#fff"/><text x="18" y="17.5" text-anchor="middle" font-size="12">🍴</text></svg>`),
+      scaledSize: new google.maps.Size(36, 44),
+      anchor: new google.maps.Point(18, 44)
+    }
+  });
+  marker.addListener('click', () => {
+    selectedId = p.id;
+    expandPanelIfMobile();
+    renderList();
+    showInfo(p, marker);
+    setTimeout(() => {
+      const el = document.querySelector(`.item[data-id="${p.id}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  });
+  gmarkers[p.id] = marker;
+}
+
+function updateCatFilter() {
+  const select = document.getElementById('catFilter');
+  const current = select.value;
+  const allCats = [...new Set(PLACES.map(p => p.category).filter(Boolean))].sort();
+  select.innerHTML = '<option value="">🍽️ 全部菜系</option>' + allCats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if (current && allCats.includes(current)) select.value = current;
+}
+
+// 解析 JSON（支持 GeoJSON、Google Takeout、普通数组）
+function parseJson(json) {
+  // GeoJSON FeatureCollection（Google Takeout 格式）
+  if (json.type === 'FeatureCollection' && Array.isArray(json.features)) {
+    return json.features.map(f => {
+      const coords = f.geometry && f.geometry.coordinates; // [lng, lat]
+      if (!coords || coords.length < 2) return null;
+      const props = f.properties || {};
+      const name = props.name || props.Title || props.title || '未命名';
+      return {
+        id: slugify(name) || 'place-' + Math.random().toString(36).slice(2, 8),
+        name: name,
+        area: props.address || props.area || props.location || '',
+        category: props.category || props.type || '餐厅',
+        price: props.price || '',
+        rating: parseFloat(props.rating || props.googleRating) || null,
+        lat: coords[1],
+        lng: coords[0],
+        url: props.url || props.google_maps_url || ''
+      };
+    }).filter(p => p && isFinite(p.lat) && isFinite(p.lng));
+  }
+
+  // 普通数组
+  const arr = Array.isArray(json) ? json : (json.places || json.data || json.items || []);
+  return arr.map(item => {
+    const lat = parseFloat(item.lat || item.latitude || (item.geometry && item.geometry.location && item.geometry.location.lat));
+    const lng = parseFloat(item.lng || item.lon || item.longitude || (item.geometry && item.geometry.location && item.geometry.location.lng));
+    if (!isFinite(lat) || !isFinite(lng)) return null;
+    const name = item.name || item.title || item.Title || '未命名';
+    return {
+      id: item.id || slugify(name) || 'place-' + Math.random().toString(36).slice(2, 8),
+      name: name,
+      area: item.area || item.address || item.neighborhood || item.district || '',
+      category: item.category || item.cuisine || item.type || '餐厅',
+      price: item.price || item.priceLevel || '',
+      rating: parseFloat(item.rating || item.googleRating) || null,
+      lat: lat,
+      lng: lng,
+      url: item.url || item.googleMapsUrl || item.mapsUrl || ''
+    };
+  }).filter(Boolean);
+}
+
+// 解析 CSV
+function parseCsv(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+  return lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+    const lat = parseFloat(obj.lat || obj.latitude);
+    const lng = parseFloat(obj.lng || obj.lon || obj.longitude);
+    if (!isFinite(lat) || !isFinite(lng)) return null;
+    const name = obj.name || obj.title || '未命名';
+    return {
+      id: slugify(name) || 'place-' + Math.random().toString(36).slice(2, 8),
+      name: name,
+      area: obj.area || obj.address || '',
+      category: obj.category || obj.type || '餐厅',
+      price: obj.price || '',
+      rating: parseFloat(obj.rating) || null,
+      lat: lat,
+      lng: lng,
+      url: obj.url || ''
+    };
+  }).filter(Boolean);
+}
+
+function slugify(s) {
+  return String(s||'').toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+}
+</script>
+
+<!-- Google Maps API -->
+<script>
+(function() {
+  var s = document.createElement('script');
+  s.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCQfnrSZ-a8j5alavgI_i1qkLWFfX3A9mM&callback=initMap&region=MY&language=zh-CN';
+  s.async = true;
+  s.defer = true;
+  document.head.appendChild(s);
+})();
+</script>
+
+</body>
+</html>

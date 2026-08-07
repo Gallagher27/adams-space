@@ -1,0 +1,1113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f6fb" />
+    <meta name="description" content="人民币、美元、马币及东南亚常用币种的相互换算工具。" />
+    <title>FX Flip · 多币种换算</title>
+    <style>
+      :root {
+        --ink: #16253f;
+        --ink-soft: #53627b;
+        --muted: #8591a7;
+        --line: #e8edf5;
+        --canvas: #f3f6fb;
+        --brand: #4566ed;
+        --brand-deep: #324fce;
+        --brand-pale: #edf1ff;
+        --mint: #0b9f84;
+        --mint-pale: #e7f7f3;
+        --warm: #f09b52;
+        --warm-pale: #fff3e8;
+        --shadow: 0 20px 55px rgba(34, 52, 88, 0.08);
+        --radius-xl: 28px;
+        --radius-lg: 20px;
+        --radius-md: 14px;
+      }
+
+      * { box-sizing: border-box; }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 84% 4%, rgba(114, 139, 255, 0.12), transparent 24rem),
+          radial-gradient(circle at 9% 30%, rgba(35, 192, 165, 0.08), transparent 22rem),
+          var(--canvas);
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button, input, select { font: inherit; }
+      button, select { cursor: pointer; }
+
+      .page-shell {
+        width: min(1180px, 100%);
+        margin: 0 auto;
+        padding: 28px 24px 42px;
+      }
+
+      .topbar,
+      .hero,
+      .converter-toolbar,
+      .rate-banner,
+      .footer-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .topbar { gap: 20px; }
+
+      .topbar-tools {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 31px;
+        height: 31px;
+        padding: 5px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 3px;
+        overflow: hidden;
+        border-radius: 10px;
+        background: var(--ink);
+        transform: rotate(-8deg);
+      }
+
+      .brand-mark span { display: block; border-radius: 3px; background: #fff; }
+      .brand-mark span:nth-child(2) { background: #93a6ff; }
+      .brand-mark span:nth-child(3) { background: #5bcbb7; }
+      .brand-mark span:nth-child(4) { background: #fff; opacity: 0.65; }
+
+      .topbar-note { color: var(--muted); font-size: 12px; letter-spacing: 0.02em; }
+
+      .language-toggle {
+        min-width: 42px;
+        height: 34px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: rgba(255, 255, 255, 0.8);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .language-toggle:hover,
+      .language-toggle:focus-visible {
+        border-color: #bcc9ea;
+        color: var(--brand-deep);
+        background: var(--brand-pale);
+        outline: none;
+      }
+
+      .hero {
+        align-items: flex-end;
+        gap: 28px;
+        padding: 54px 0 31px;
+      }
+
+      .hero-copy { max-width: 740px; }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 13px;
+        color: var(--brand-deep);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before { width: 18px; height: 2px; background: var(--brand); content: ""; }
+      h1, h2, h3, p { margin: 0; }
+
+      h1 {
+        max-width: 710px;
+        font-size: clamp(38px, 5.5vw, 64px);
+        line-height: 0.98;
+        letter-spacing: -0.065em;
+      }
+
+      .hero-subtitle {
+        max-width: 650px;
+        margin-top: 18px;
+        color: var(--ink-soft);
+        font-size: 15px;
+        line-height: 1.75;
+      }
+
+      .live-pill {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        gap: 9px;
+        min-height: 38px;
+        padding: 0 14px;
+        border: 1px solid #d7e4fb;
+        border-radius: 999px;
+        color: #3d5f93;
+        background: rgba(255, 255, 255, 0.72);
+        font-size: 12px;
+        font-weight: 700;
+        box-shadow: 0 6px 22px rgba(37, 64, 115, 0.05);
+      }
+
+      .live-dot,
+      .status-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--mint);
+        box-shadow: 0 0 0 4px rgba(11, 159, 132, 0.12);
+      }
+
+      .live-pill.loading .live-dot,
+      .status-dot.loading { background: var(--warm); box-shadow: 0 0 0 4px rgba(240, 155, 82, 0.13); }
+      .live-pill.offline .live-dot,
+      .status-dot.offline { background: #a8b2c3; box-shadow: 0 0 0 4px rgba(168, 178, 195, 0.13); }
+
+      .panel {
+        border: 1px solid rgba(218, 226, 239, 0.9);
+        border-radius: var(--radius-xl);
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: var(--shadow);
+      }
+
+      .converter-panel { padding: 25px; }
+      .converter-toolbar { align-items: flex-start; gap: 22px; }
+      .panel-kicker { margin-bottom: 8px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+      .converter-toolbar h2 { font-size: 24px; letter-spacing: -0.04em; }
+      .converter-toolbar p:not(.panel-kicker) { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+      .toolbar-actions { display: flex; flex: none; align-items: center; gap: 10px; }
+      .editing-note { display: inline-flex; align-items: center; gap: 8px; min-height: 35px; padding: 0 11px; border-radius: 999px; color: var(--ink-soft); background: #f6f9fd; font-size: 11px; font-weight: 700; }
+      .editing-note::before { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 4px rgba(69, 102, 237, 0.1); content: ""; }
+
+      .refresh-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 35px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: #fff;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .refresh-btn:hover, .refresh-btn:focus-visible { border-color: #bcc9ea; color: var(--brand-deep); background: var(--brand-pale); }
+      .refresh-btn.is-loading { pointer-events: none; opacity: 0.55; }
+      .refresh-icon { display: inline-block; font-size: 15px; line-height: 1; }
+
+      .rate-banner {
+        justify-content: flex-start;
+        gap: 9px;
+        min-height: 42px;
+        margin-top: 21px;
+        padding: 0 13px;
+        border-radius: 13px;
+        color: #56708e;
+        background: #f6f9fd;
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .rate-banner .status-dot { flex: none; width: 6px; height: 6px; box-shadow: none; }
+
+      .currency-grid {
+        display: grid;
+        width: 100%;
+        margin-right: auto;
+        margin-left: auto;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 15px;
+      }
+
+      .currency-card {
+        --delay: 0ms;
+        --currency-bg: none;
+        position: relative;
+        min-width: 0;
+        min-height: 285px;
+        padding: 18px;
+        overflow: hidden;
+        border: 1px solid #dde5f1;
+        border-radius: var(--radius-lg);
+        background: #fff;
+        box-shadow: 0 9px 28px rgba(35, 54, 89, 0.045);
+        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+      }
+
+      .currency-card::before {
+        position: absolute;
+        right: 12px;
+        bottom: 10px;
+        width: 74%;
+        height: 56%;
+        z-index: 0;
+        background-image: var(--currency-bg);
+        background-position: right center;
+        background-repeat: no-repeat;
+        background-size: auto 100%;
+        border-radius: 12px;
+        content: "";
+        filter: saturate(0.92) contrast(1.06);
+        opacity: 0.52;
+        pointer-events: none;
+        transition: opacity 180ms ease, transform 500ms ease;
+      }
+
+      .currency-card--CNY { --currency-bg: url("./assets/currency-cny.jpg"); }
+      .currency-card--USD { --currency-bg: url("./assets/currency-usd.jpg"); }
+      .currency-card--MYR { --currency-bg: url("./assets/currency-myr.jpg"); }
+      .currency-card--IDR { --currency-bg: url("./assets/currency-idr.jpg"); }
+      .currency-card--SGD { --currency-bg: url("./assets/currency-sgd.jpg"); }
+      .currency-card--THB { --currency-bg: url("./assets/currency-thb.jpg"); }
+      .currency-card--VND { --currency-bg: url("./assets/currency-vnd.jpg"); }
+      .currency-card--EUR { --currency-bg: url("./assets/currency-eur.jpg"); }
+
+      .currency-card > * { position: relative; z-index: 1; }
+
+      .currency-card.card-enter { animation: cardIn 500ms var(--delay) both cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+      .currency-card::after {
+        position: absolute;
+        top: -37px;
+        right: -33px;
+        z-index: 0;
+        width: 94px;
+        height: 94px;
+        border: 1px solid rgba(69, 102, 237, 0.11);
+        border-radius: 50%;
+        box-shadow: 0 0 0 14px rgba(69, 102, 237, 0.032), 0 0 0 29px rgba(69, 102, 237, 0.022);
+        content: "";
+        pointer-events: none;
+      }
+
+      .currency-card:hover { border-color: #c4d0e5; box-shadow: 0 16px 35px rgba(35, 54, 89, 0.09); transform: translateY(-4px); }
+      .currency-card:hover::before { opacity: 0.62; transform: scale(1.025); }
+      .currency-card.is-anchor { border-color: #aebeff; box-shadow: 0 0 0 3px rgba(69, 102, 237, 0.08), 0 14px 32px rgba(35, 54, 89, 0.07); }
+      .currency-card.is-updated .currency-input-wrap { animation: valuePulse 600ms ease both; }
+
+      .card-head { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; }
+      .currency-badge { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px; color: var(--brand-deep); background: var(--brand-pale); font-size: 10px; font-weight: 900; }
+      .currency-card:nth-child(2) .currency-badge { color: #087e6b; background: var(--mint-pale); }
+      .currency-card:nth-child(3) .currency-badge { color: #a8662c; background: var(--warm-pale); }
+      .currency-card:nth-child(4) .currency-badge { color: #6d4ca4; background: #f1eaff; }
+      .currency-copy { min-width: 0; }
+      .currency-copy strong { display: block; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+      .currency-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+      .anchor-label { margin-left: auto; padding: 4px 7px; border-radius: 7px; color: var(--brand-deep); background: var(--brand-pale); font-size: 9px; font-weight: 800; white-space: nowrap; }
+
+      .remove-btn {
+        display: grid;
+        width: 25px;
+        height: 25px;
+        margin-left: auto;
+        place-items: center;
+        border: 0;
+        border-radius: 8px;
+        color: #9aa7ba;
+        background: transparent;
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .remove-btn:hover, .remove-btn:focus-visible { color: #b15f6d; background: #fff0f2; }
+      .remove-btn:disabled { cursor: not-allowed; opacity: 0.26; }
+
+      .currency-field-label { position: relative; z-index: 1; display: block; margin-top: 21px; color: var(--muted); font-size: 10px; font-weight: 750; }
+
+      .currency-input-wrap {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 66px;
+        margin-top: 8px;
+        padding: 0 13px;
+        border: 1.5px solid #cfd9ee;
+        border-radius: 16px;
+        background: #fff;
+        transition: border-color 160ms ease, box-shadow 160ms ease;
+      }
+
+      .currency-input-wrap:focus-within { border-color: #9badff; box-shadow: 0 0 0 4px rgba(69, 102, 237, 0.1); }
+      .currency-symbol { flex: none; color: var(--ink-soft); font-size: 17px; font-weight: 800; }
+      .currency-amount-input { min-width: 0; width: 100%; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: clamp(26px, 4.2vw, 42px); font-weight: 800; letter-spacing: -0.075em; }
+      .currency-amount-input::placeholder { color: #c1cada; }
+      .currency-code { flex: none; color: var(--muted); font-size: 10px; font-weight: 900; }
+      .anchor-label[hidden] { display: none; }
+
+      .compact-line { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 5px; width: fit-content; min-height: 26px; margin-top: 13px; padding-right: 7px; border-radius: 7px; background: rgba(255, 255, 255, 0.84); }
+      .compact-label { color: var(--muted); font-size: 10px; }
+      .compact-line strong { color: var(--ink-soft); font-size: 15px; letter-spacing: -0.03em; }
+      .compact-unit { color: var(--brand-deep); font-size: 11px; font-weight: 900; }
+      .card-rate { position: relative; z-index: 1; width: fit-content; max-width: 100%; min-height: 16px; margin-top: 3px; padding-right: 7px; overflow: hidden; border-radius: 6px; background: rgba(255, 255, 255, 0.84); color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+      .card-rate strong { color: var(--ink-soft); font-weight: 800; }
+
+      .shortcut-label { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; margin-top: 17px; padding: 2px 6px 2px 0; border-radius: 7px; background: rgba(255, 255, 255, 0.84); color: var(--muted); font-size: 10px; font-weight: 750; }
+      .copy-card-btn { padding: 0; border: 0; color: var(--brand-deep); background: transparent; font-size: 10px; font-weight: 800; }
+      .copy-card-btn:hover, .copy-card-btn:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+      .card-shortcuts { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+      .shortcut-btn { min-height: 31px; padding: 5px 3px; border: 1px solid #dce4f2; border-radius: 9px; color: var(--brand-deep); background: #f7f9ff; font-size: 10px; font-weight: 800; transition: 150ms ease; }
+      .shortcut-btn:hover, .shortcut-btn:focus-visible { border-color: #9badff; background: var(--brand-pale); transform: translateY(-1px); }
+      .shortcut-btn.clear-btn { color: var(--muted); background: #fbfcff; }
+
+      .add-currency-card { display: flex; flex-direction: column; justify-content: center; border-style: dashed; background: rgba(255, 255, 255, 0.58); }
+      .add-currency-card:hover { border-color: #aebeff; background: #fbfcff; }
+      .plus-mark { display: grid; width: 38px; height: 38px; place-items: center; margin-bottom: 13px; border-radius: 12px; color: var(--brand-deep); background: var(--brand-pale); font-size: 24px; font-weight: 400; }
+      .add-currency-card h3 { font-size: 14px; }
+      .add-currency-card p { margin-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+      .optional-select { width: 100%; height: 40px; margin-top: 16px; padding: 0 12px; border: 1px solid var(--line); border-radius: 11px; outline: 0; color: var(--ink-soft); background: #fff; font-size: 11px; font-weight: 750; }
+      .optional-select:focus { border-color: #9badff; box-shadow: 0 0 0 4px rgba(69, 102, 237, 0.1); }
+
+      .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+      .info-card { padding: 19px 21px; border: 1px solid rgba(218, 226, 239, 0.9); border-radius: var(--radius-lg); background: rgba(255, 255, 255, 0.7); }
+      .info-card h3 { font-size: 12px; }
+      .info-card p { margin-top: 8px; color: var(--ink-soft); font-size: 12px; line-height: 1.55; }
+      .unit-line { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+      .unit-tag { padding: 5px 9px; border-radius: 7px; color: var(--brand-deep); background: var(--brand-pale); font-size: 10px; font-weight: 800; }
+      .unit-tag.mint { color: #087e6b; background: var(--mint-pale); }
+      .unit-tag.warm { color: #a8662c; background: var(--warm-pale); }
+
+      .footer-row { align-items: flex-start; gap: 16px; margin-top: 20px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+      .footer-row a { color: var(--brand-deep); text-underline-offset: 3px; }
+      .footer-right { text-align: right; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+      @keyframes cardIn {
+        from { opacity: 0; transform: translateY(12px) scale(0.985); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+
+      @keyframes valuePulse {
+        0% { border-color: #9badff; box-shadow: 0 0 0 0 rgba(69, 102, 237, 0.24); }
+        55% { border-color: #8ba0ff; box-shadow: 0 0 0 6px rgba(69, 102, 237, 0.1); }
+        100% { border-color: #cfd9ee; box-shadow: 0 0 0 0 rgba(69, 102, 237, 0); }
+      }
+
+      @media (max-width: 860px) {
+        .hero { align-items: flex-start; flex-direction: column; gap: 22px; padding-top: 44px; }
+        .converter-toolbar { flex-direction: column; }
+        .toolbar-actions { width: 100%; justify-content: space-between; }
+        .currency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+
+      @media (max-width: 560px) {
+        .page-shell { padding: 19px 14px 29px; }
+        .topbar-note { display: none; }
+        .topbar-tools { gap: 0; }
+        .hero { padding: 39px 4px 25px; }
+        h1 { font-size: 45px; }
+        .hero-subtitle { font-size: 14px; }
+        .converter-panel { padding: 18px; border-radius: 23px; }
+        .converter-toolbar h2 { font-size: 20px; }
+        .toolbar-actions { align-items: stretch; flex-direction: column; }
+        .editing-note, .refresh-btn { justify-content: center; }
+        .currency-grid { grid-template-columns: 1fr; gap: 9px; }
+        .currency-card { min-height: 267px; padding: 16px; }
+        .currency-amount-input { font-size: 29px; }
+        .bottom-row { grid-template-columns: 1fr; gap: 9px; }
+        .footer-row { flex-direction: column; }
+        .footer-right { text-align: left; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="FX Flip 首页" data-i18n-aria-label="brandLabel">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+          <span>FX FLIP</span>
+        </a>
+        <div class="topbar-tools">
+          <span class="topbar-note" data-i18n="topbarNote">每日更新 · 以人民币为基准</span>
+          <button class="language-toggle" id="languageToggle" type="button" aria-label="切换为英文" aria-pressed="false">EN</button>
+        </div>
+      </header>
+
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow">FX FLIP</p>
+          <h1 data-i18n="heroTitle">汇率转换</h1>
+          <p class="hero-subtitle" data-i18n="heroSubtitle">任意币种输入，结果同步换算。</p>
+        </div>
+        <div class="live-pill loading" id="livePill"><span class="live-dot"></span><span id="livePillText" data-i18n="syncing">正在同步汇率</span></div>
+      </section>
+
+      <section class="panel converter-panel" aria-label="相互汇率换算工作区" data-i18n-aria-label="workspaceLabel">
+        <div class="converter-toolbar">
+          <div>
+            <p class="panel-kicker" data-i18n="converterKicker">01 · 换算工具</p>
+            <h2 data-i18n="converterTitle">汇率转换</h2>
+            <p data-i18n="converterHint">点击任意金额框开始换算。</p>
+          </div>
+          <div class="toolbar-actions">
+            <span class="editing-note" id="editingNote">当前从人民币换算</span>
+            <button class="refresh-btn" id="refreshBtn" type="button" aria-label="刷新汇率" data-i18n-aria-label="refreshRates"><span class="refresh-icon" aria-hidden="true">↻</span><span data-i18n="refreshRates">刷新汇率</span></button>
+          </div>
+        </div>
+
+        <div class="rate-banner" role="status" aria-live="polite">
+          <span class="status-dot loading" id="statusDot"></span>
+          <span id="rateStatus" data-i18n="fetchingRates">正在获取今日基准汇率…</span>
+        </div>
+
+        <div class="currency-grid" id="currencyGrid" aria-live="polite"></div>
+      </section>
+
+      <section class="bottom-row" aria-label="使用说明" data-i18n-aria-label="usageLabel">
+        <article class="info-card">
+          <h3 data-i18n="equalInputTitle">平级输入</h3>
+          <p data-i18n="equalInputCopy">最少保留 1 个币种，最多展示 4 个。移除和添加只会改变数量，不会改变每个金额框的视觉权重。</p>
+          <div class="unit-line"><span class="unit-tag" data-i18n="cnyUnits">CNY · 亿 / 万</span><span class="unit-tag mint">USD · K / M / B</span><span class="unit-tag warm">MYR · K / M / B</span></div>
+        </article>
+        <article class="info-card">
+          <h3 data-i18n="readableTitle">易读结果</h3>
+          <p data-i18n="readableCopy">每个卡片都同时保留精确金额和 K / M / B / T 速读值，方便快速判断规模。</p>
+          <div class="unit-line"><span class="unit-tag">K · <span data-i18n="thousand">千</span></span><span class="unit-tag mint">M · <span data-i18n="million">百万</span></span><span class="unit-tag warm">B · <span data-i18n="billion">十亿</span></span><span class="unit-tag">T · <span data-i18n="trillion">万亿</span></span></div>
+        </article>
+      </section>
+
+      <footer class="footer-row">
+        <span data-i18n="footerNote">汇率数据按日更新；点击右上角“刷新汇率”时，会主动获取最新基准数据。</span>
+        <span class="footer-right">Rates by <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">ExchangeRate-API</a> · Open Access</span>
+      </footer>
+    </main>
+
+    <script>
+      const API_URL = "https://open.er-api.com/v6/latest/CNY";
+      const CACHE_KEY = "fx-flip-cny-rates-v1";
+      const CACHE_TTL = 60 * 60 * 1000;
+      const SUPPORTED_CODES = ["CNY", "USD", "MYR", "IDR", "SGD", "THB", "VND", "EUR"];
+
+      const TRANSLATIONS = {
+        zh: {
+          pageTitle: "FX Flip · 多币种换算",
+          brandLabel: "FX Flip 首页",
+          topbarNote: "每日更新 · 以人民币为基准",
+          heroTitle: "汇率转换",
+          heroSubtitle: "任意币种输入，结果同步换算。",
+          syncing: "正在同步汇率",
+          synced: "汇率已同步",
+          useRecentData: "使用最近数据",
+          workspaceLabel: "相互汇率换算工作区",
+          converterKicker: "01 · 换算工具",
+          converterTitle: "汇率转换",
+          converterHint: "点击任意金额框开始换算。",
+          refreshRates: "刷新汇率",
+          fetchingRates: "正在获取今日基准汇率…",
+          usageLabel: "使用说明",
+          equalInputTitle: "平级输入",
+          equalInputCopy: "最少保留 1 个币种，最多展示 4 个。移除和添加只会改变数量，不会改变每个金额框的视觉权重。",
+          cnyUnits: "CNY · 亿 / 万",
+          readableTitle: "易读结果",
+          readableCopy: "每个卡片都同时保留精确金额和 K / M / B / T 速读值，方便快速判断规模。",
+          thousand: "千",
+          million: "百万",
+          billion: "十亿",
+          trillion: "万亿",
+          footerNote: "汇率数据按日更新；点击右上角“刷新汇率”时，会主动获取最新基准数据。",
+          currentInput: "当前输入",
+          currencyHint: "可输入 / 可换算",
+          amountSuffix: "金额",
+          convertingAmount: "换算后的金额，也可以直接改写",
+          convertingFrom: "当前从",
+          convertingFromSuffix: "换算",
+          readable: "易读",
+          shortcutUnits: "快捷单位",
+          copyExact: "复制精确值",
+          copied: "已复制",
+          manualCopy: "请手动复制",
+          remove: "移除",
+          keepOne: "至少保留一个币种",
+          addCurrencyTitle: "添加第 {n} 个币种",
+          addCurrencyDescription: "需要时再加入新加坡元、印尼盾、泰铢或越南盾。",
+          selectCurrency: "选择币种",
+          fetchingLatest: "正在获取最新基准汇率…",
+          unableToConnect: "暂时无法连接汇率源，当前为内置最近参考值",
+          cachedPrefix: "已使用本机缓存 · ",
+          todayPrefix: "今日基准汇率 · ",
+          updateSuffix: "更新",
+          unknownUpdate: "更新时间未知",
+          noUpdate: "暂未获取更新时间",
+          shortcutHundredMillion: "亿",
+          shortcutTenMillion: "千万",
+          shortcutTenThousand: "万",
+          shortcutHundred: "百",
+          shortcutClear: "清空",
+          shortcutClearTitle: "清空当前金额",
+          shortcutHundredMillionTitle: "× 100,000,000",
+          shortcutTenMillionTitle: "× 10,000,000",
+          shortcutTenThousandTitle: "× 10,000",
+          shortcutHundredTitle: "× 100",
+          shortcutThousandTitle: "× 1,000",
+          shortcutMillionTitle: "× 1,000,000",
+          shortcutBillionTitle: "× 1,000,000,000"
+        },
+        en: {
+          pageTitle: "FX Flip · Currency Converter",
+          brandLabel: "FX Flip home",
+          topbarNote: "Daily refresh · CNY base",
+          heroTitle: "Currency conversion",
+          heroSubtitle: "Enter any currency and see the equivalent instantly.",
+          syncing: "Syncing rates",
+          synced: "Rates synced",
+          useRecentData: "Using recent data",
+          workspaceLabel: "Two-way currency conversion workspace",
+          converterKicker: "01 · Converter",
+          converterTitle: "Currency conversion",
+          converterHint: "Click any amount field to start converting.",
+          refreshRates: "Refresh rates",
+          fetchingRates: "Fetching today’s base rates…",
+          usageLabel: "How it works",
+          equalInputTitle: "Equal inputs",
+          equalInputCopy: "Keep at least 1 currency and show up to 4. Adding or removing a card never changes the visual weight of the inputs.",
+          cnyUnits: "CNY · 100M / 10K",
+          readableTitle: "Readable results",
+          readableCopy: "Every card keeps the exact amount alongside a quick K / M / B / T view for faster scale checks.",
+          thousand: "thousand",
+          million: "million",
+          billion: "billion",
+          trillion: "trillion",
+          footerNote: "Rates refresh daily. Use “Refresh rates” in the top-right to fetch the latest base data.",
+          currentInput: "Current input",
+          currencyHint: "Editable / convertible",
+          amountSuffix: " amount",
+          convertingAmount: "Converted amount — also editable",
+          convertingFrom: "Converting from",
+          convertingFromSuffix: "",
+          readable: "Readable",
+          shortcutUnits: "Quick units",
+          copyExact: "Copy exact value",
+          copied: "Copied",
+          manualCopy: "Copy manually",
+          remove: "Remove",
+          keepOne: "Keep at least one currency",
+          addCurrencyTitle: "Add currency {n}",
+          addCurrencyDescription: "Add Singapore dollars, Indonesian rupiah, baht, or dong when needed.",
+          selectCurrency: "Choose currency",
+          fetchingLatest: "Fetching the latest base rates…",
+          unableToConnect: "Unable to reach the rate source. Using the built-in recent reference values.",
+          cachedPrefix: "Using local cache · ",
+          todayPrefix: "Today’s base rates · ",
+          updateSuffix: "updated",
+          unknownUpdate: "Update time unknown",
+          noUpdate: "No update time yet",
+          shortcutHundredMillion: "100M",
+          shortcutTenMillion: "10M",
+          shortcutTenThousand: "10K",
+          shortcutHundred: "100",
+          shortcutClear: "Clear",
+          shortcutClearTitle: "Clear current amount",
+          shortcutHundredMillionTitle: "× 100,000,000",
+          shortcutTenMillionTitle: "× 10,000,000",
+          shortcutTenThousandTitle: "× 10,000",
+          shortcutHundredTitle: "× 100",
+          shortcutThousandTitle: "× 1,000",
+          shortcutMillionTitle: "× 1,000,000",
+          shortcutBillionTitle: "× 1,000,000,000"
+        }
+      };
+
+      let language = localStorage.getItem("fx-flip-language") === "en" ? "en" : "zh";
+
+      function t(key) {
+        return TRANSLATIONS[language][key] || key;
+      }
+
+      const CURRENCIES = {
+        CNY: { name: { zh: "人民币", en: "Chinese Yuan" }, symbol: "¥" },
+        USD: { name: { zh: "美元", en: "US Dollar" }, symbol: "$" },
+        MYR: { name: { zh: "马来西亚令吉", en: "Malaysian Ringgit" }, shortName: { zh: "马币", en: "MYR" }, symbol: "RM" },
+        IDR: { name: { zh: "印尼盾", en: "Indonesian Rupiah" }, symbol: "Rp" },
+        SGD: { name: { zh: "新加坡元", en: "Singapore Dollar" }, symbol: "S$" },
+        THB: { name: { zh: "泰铢", en: "Thai Baht" }, symbol: "฿" },
+        VND: { name: { zh: "越南盾", en: "Vietnamese Dong" }, symbol: "₫" },
+        EUR: { name: { zh: "欧元", en: "Euro" }, symbol: "€" }
+      };
+
+      function currencyName(code) {
+        return CURRENCIES[code].name[language];
+      }
+
+      function currencyShortName(code) {
+        const info = CURRENCIES[code];
+        return info.shortName?.[language] || info.name[language];
+      }
+
+      const FALLBACK_RATES = {
+        CNY: 1,
+        USD: 0.147934,
+        MYR: 0.602954,
+        IDR: 2680.965147,
+        SGD: 0.18963,
+        THB: 4.940291,
+        VND: 3891.050584,
+        EUR: 0.12828
+      };
+
+      function readSavedCodes() {
+        try {
+          const saved = JSON.parse(localStorage.getItem("fx-flip-codes") || "null");
+          if (Array.isArray(saved)) return saved.filter((code, index) => SUPPORTED_CODES.includes(code) && saved.indexOf(code) === index).slice(0, 4);
+        } catch (error) {
+          return null;
+        }
+        return null;
+      }
+
+      const oldOptional = localStorage.getItem("fx-flip-optional");
+      const savedCodes = readSavedCodes();
+      const initialCodes = savedCodes?.length ? savedCodes : ["CNY", "USD", "MYR"];
+      if (oldOptional && SUPPORTED_CODES.includes(oldOptional) && !initialCodes.includes(oldOptional) && initialCodes.length < 4) initialCodes.push(oldOptional);
+
+      const state = {
+        codes: initialCodes,
+        anchorCode: initialCodes[0],
+        anchorAmount: 2000000000,
+        rawInputs: { CNY: "2000000000" },
+        rates: FALLBACK_RATES,
+        updated: null,
+        nextUpdate: null,
+        source: "fallback",
+        loading: false
+      };
+
+      const els = {
+        currencyGrid: document.querySelector("#currencyGrid"),
+        editingNote: document.querySelector("#editingNote"),
+        rateStatus: document.querySelector("#rateStatus"),
+        statusDot: document.querySelector("#statusDot"),
+        livePill: document.querySelector("#livePill"),
+        livePillText: document.querySelector("#livePillText"),
+        refreshBtn: document.querySelector("#refreshBtn")
+      };
+
+      function formatNumber(value, maximumFractionDigits = 2) {
+        return new Intl.NumberFormat("en-US", { maximumFractionDigits }).format(value);
+      }
+
+      function parseAmount(value) {
+        const raw = String(value ?? "").replace(/,/g, "").trim();
+        if (!raw || raw === "." || raw === "-") return 0;
+        const number = Number(raw);
+        return Number.isFinite(number) ? Math.max(0, number) : 0;
+      }
+
+      function sanitizeInputText(value) {
+        const safe = String(value ?? "").replace(/[^0-9.,]/g, "");
+        const firstDot = safe.indexOf(".");
+        if (firstDot === -1) return safe;
+        return `${safe.slice(0, firstDot + 1)}${safe.slice(firstDot + 1).replace(/\./g, "")}`;
+      }
+
+      function formatInputAmount(value, code) {
+        if (!Number.isFinite(value)) return "";
+        if (value === 0) return "0";
+        const maximumFractionDigits = code === "IDR" || Math.abs(value) >= 1000 ? 0 : 4;
+        return formatNumber(value, maximumFractionDigits);
+      }
+
+      function compactAmount(value, code) {
+        if (!Number.isFinite(value) || value === 0) return { value: "0", unit: "" };
+        const absolute = Math.abs(value);
+        if (code === "CNY") {
+          const chineseUnits = [
+            { threshold: 1e12, unit: "万亿" },
+            { threshold: 1e8, unit: "亿" },
+            { threshold: 1e7, unit: "千万" },
+            { threshold: 1e4, unit: "万" }
+          ];
+          const match = chineseUnits.find((item) => absolute >= item.threshold);
+          if (!match) return { value: formatNumber(value, 2), unit: "" };
+          const compact = value / match.threshold;
+          return { value: formatNumber(compact, 2), unit: match.unit };
+        }
+        const units = [
+          { threshold: 1e12, unit: "T" },
+          { threshold: 1e9, unit: "B" },
+          { threshold: 1e6, unit: "M" },
+          { threshold: 1e3, unit: "K" }
+        ];
+        const match = units.find((item) => absolute >= item.threshold);
+        if (!match) return { value: formatNumber(value, 2), unit: "" };
+        const compact = value / match.threshold;
+        return { value: formatNumber(compact, 2), unit: match.unit };
+      }
+
+      function rateFor(code) {
+        const anchorRate = state.rates[state.anchorCode];
+        const targetRate = state.rates[code];
+        if (!Number.isFinite(anchorRate) || !Number.isFinite(targetRate) || anchorRate === 0) return 0;
+        return targetRate / anchorRate;
+      }
+
+      function formatRate(value) {
+        if (!value) return "—";
+        if (value >= 100) return formatNumber(value, 2);
+        if (value >= 1) return formatNumber(value, 4);
+        return formatNumber(value, 6);
+      }
+
+      function cleanNumericString(value) {
+        return String(value).replace(/,/g, "").replace(/[^0-9.]/g, "");
+      }
+
+      function scaleDecimalString(value, exponent) {
+        let raw = cleanNumericString(value.trim());
+        if (!raw) raw = "1";
+        if (raw.includes("e") || raw.includes("E")) return String(Number(raw) * (10 ** exponent));
+        const parts = raw.split(".");
+        const integer = parts[0] || "0";
+        const decimal = parts[1] || "";
+        const allDigits = `${integer}${decimal}`;
+        const digits = allDigits.replace(/^0+(?=\d)/, "");
+        const leadingZerosRemoved = allDigits.length - digits.length;
+        const decimalPosition = integer.length + exponent - leadingZerosRemoved;
+        if (decimalPosition >= digits.length) return `${digits}${"0".repeat(decimalPosition - digits.length)}`;
+        if (decimalPosition > 0) return `${digits.slice(0, decimalPosition)}.${digits.slice(decimalPosition)}`.replace(/\.$/, "");
+        return `0.${"0".repeat(Math.abs(decimalPosition))}${digits}`;
+      }
+
+      function shortcutConfig(code) {
+        if (code === "CNY") {
+          return [
+            { label: t("shortcutHundredMillion"), exponent: 8, title: t("shortcutHundredMillionTitle") },
+            { label: t("shortcutTenMillion"), exponent: 7, title: t("shortcutTenMillionTitle") },
+            { label: t("shortcutTenThousand"), exponent: 4, title: t("shortcutTenThousandTitle") },
+            { label: t("shortcutHundred"), exponent: 2, title: t("shortcutHundredTitle") }
+          ];
+        }
+        return [
+          { label: "K", exponent: 3, title: t("shortcutThousandTitle") },
+          { label: "Million", exponent: 6, title: t("shortcutMillionTitle") },
+          { label: "Billion", exponent: 9, title: t("shortcutBillionTitle") },
+          { label: t("shortcutClear"), exponent: null, title: t("shortcutClearTitle") }
+        ];
+      }
+
+      function saveCodes() {
+        localStorage.setItem("fx-flip-codes", JSON.stringify(state.codes));
+      }
+
+      function getAmountFor(code) {
+        if (code === state.anchorCode) return state.anchorAmount;
+        return state.anchorAmount * rateFor(code);
+      }
+
+      function setEditingNote() {
+        els.editingNote.textContent = `${t("convertingFrom")} ${currencyShortName(state.anchorCode)}${t("convertingFromSuffix") ? ` ${t("convertingFromSuffix")}` : ""}`;
+      }
+
+      function pulseCard(code) {
+        const card = document.querySelector(`[data-card-code="${code}"]`);
+        if (!card) return;
+        card.classList.remove("is-updated");
+        void card.offsetWidth;
+        card.classList.add("is-updated");
+        window.setTimeout(() => card.classList.remove("is-updated"), 650);
+      }
+
+      function renderCurrencyGrid(preserveCode = "", animate = true) {
+        const cards = state.codes.map((code, index) => {
+          const info = CURRENCIES[code];
+          const amount = getAmountFor(code);
+          const compact = compactAmount(amount, code);
+          const inputValue = code === state.anchorCode && Object.prototype.hasOwnProperty.call(state.rawInputs, code) ? state.rawInputs[code] : formatInputAmount(amount, code);
+          const rate = rateFor(code);
+          const isAnchor = code === state.anchorCode;
+          const shortcuts = shortcutConfig(code).map((item) => `<button class="shortcut-btn ${item.exponent === null ? "clear-btn" : ""}" type="button" data-action="scale" data-code="${code}" data-exponent="${item.exponent ?? "clear"}" title="${item.title}">${item.label}</button>`).join("");
+          return `<article class="currency-card currency-card--${code} ${isAnchor ? "is-anchor" : ""} ${animate ? "card-enter" : ""}" style="--delay: ${index * 55}ms" data-card-code="${code}">
+            <div class="card-head">
+              <span class="currency-badge">${code}</span>
+              <span class="currency-copy"><strong>${currencyShortName(code)}</strong><span>${code} · ${t("currencyHint")}</span></span>
+              <span class="anchor-label" data-role="anchor-label" ${isAnchor ? "" : "hidden"}>${t("currentInput")}</span>
+              <button class="remove-btn" type="button" data-action="remove" data-code="${code}" ${state.codes.length === 1 ? "disabled" : ""} aria-label="${t("remove")} ${currencyName(code)}" title="${state.codes.length === 1 ? t("keepOne") : `${t("remove")}${currencyName(code)}`}" >×</button>
+            </div>
+            <label class="currency-field-label" data-role="field-label" for="amount-${code}">${isAnchor ? `${t("convertingFrom")} ${currencyShortName(code)}${t("convertingFromSuffix") ? ` ${t("convertingFromSuffix")}` : ""}` : t("convertingAmount")}</label>
+            <div class="currency-input-wrap">
+              <span class="currency-symbol">${info.symbol}</span>
+              <input class="currency-amount-input" id="amount-${code}" data-action="input" data-code="${code}" inputmode="decimal" autocomplete="off" spellcheck="false" value="${inputValue}" aria-label="${currencyName(code)}${t("amountSuffix")}" />
+              <span class="currency-code">${code}</span>
+            </div>
+            <div class="compact-line"><span class="compact-label">${t("readable")}</span><strong data-role="compact-value">${compact.value}</strong><span class="compact-unit" data-role="compact-unit">${compact.unit}</span></div>
+            <p class="card-rate" data-role="card-rate">1 ${state.anchorCode} ≈ <strong>${formatRate(rate)} ${code}</strong></p>
+            <div class="shortcut-label"><span>${t("shortcutUnits")}</span><button class="copy-card-btn" type="button" data-action="copy" data-code="${code}">${t("copyExact")}</button></div>
+            <div class="card-shortcuts">${shortcuts}</div>
+          </article>`;
+        }).join("");
+
+        const canAdd = state.codes.length < 4;
+        const available = SUPPORTED_CODES.filter((code) => !state.codes.includes(code));
+        const options = available.map((code) => `<option value="${code}">${code} · ${currencyName(code)}</option>`).join("");
+        const addCard = canAdd ? `<article class="currency-card add-currency-card ${animate ? "card-enter" : ""}" style="--delay: ${state.codes.length * 55}ms">
+          <span class="plus-mark">+</span>
+          <h3>${t("addCurrencyTitle").replace("{n}", state.codes.length + 1)}</h3>
+          <p>${t("addCurrencyDescription")}</p>
+          <label class="sr-only" for="addCurrency">${t("selectCurrency")}</label>
+          <select class="optional-select" id="addCurrency"><option value="">${t("selectCurrency")}</option>${options}</select>
+        </article>` : "";
+
+        els.currencyGrid.innerHTML = cards + addCard;
+        setEditingNote();
+
+        if (preserveCode) {
+          const input = document.querySelector(`#amount-${preserveCode}`);
+          if (input) {
+            input.focus({ preventScroll: true });
+            const savedCursor = state.rawInputs[`${preserveCode}Cursor`];
+            const cursor = Math.min(Number.isFinite(savedCursor) ? savedCursor : input.value.length, input.value.length);
+            input.setSelectionRange(cursor, cursor);
+          }
+        }
+      }
+
+      function updateCardValues(preserveCode = "", pulseCode = "") {
+        state.codes.forEach((code) => {
+          const card = document.querySelector(`[data-card-code="${code}"]`);
+          if (!card) return;
+          const isAnchor = code === state.anchorCode;
+          const amount = getAmountFor(code);
+          const compact = compactAmount(amount, code);
+          const input = card.querySelector(".currency-amount-input");
+          const fieldLabel = card.querySelector('[data-role="field-label"]');
+          const anchorLabel = card.querySelector('[data-role="anchor-label"]');
+          const compactValue = card.querySelector('[data-role="compact-value"]');
+          const compactUnit = card.querySelector('[data-role="compact-unit"]');
+          const rateLabel = card.querySelector('[data-role="card-rate"]');
+          if (input) input.value = isAnchor ? (state.rawInputs[code] ?? formatInputAmount(amount, code)) : formatInputAmount(amount, code);
+          if (fieldLabel) fieldLabel.textContent = isAnchor ? `${t("convertingFrom")} ${currencyShortName(code)}${t("convertingFromSuffix") ? ` ${t("convertingFromSuffix")}` : ""}` : t("convertingAmount");
+          if (anchorLabel) anchorLabel.hidden = !isAnchor;
+          if (compactValue) compactValue.textContent = compact.value;
+          if (compactUnit) compactUnit.textContent = compact.unit;
+          if (rateLabel) rateLabel.innerHTML = `1 ${state.anchorCode} ≈ <strong>${formatRate(rateFor(code))} ${code}</strong>`;
+          card.classList.toggle("is-anchor", isAnchor);
+          if (code === state.anchorCode) card.querySelector(".currency-code").textContent = code;
+        });
+        setEditingNote();
+        if (preserveCode) {
+          const input = document.querySelector(`#amount-${preserveCode}`);
+          if (input) {
+            input.focus({ preventScroll: true });
+            const savedCursor = state.rawInputs[`${preserveCode}Cursor`];
+            const cursor = Math.min(Number.isFinite(savedCursor) ? savedCursor : input.value.length, input.value.length);
+            input.setSelectionRange(cursor, cursor);
+          }
+        }
+        if (pulseCode) pulseCard(pulseCode);
+      }
+
+      function setAnchorFromInput(code, raw, cursor = null) {
+        const safeRaw = sanitizeInputText(raw);
+        state.anchorCode = code;
+        state.anchorAmount = parseAmount(safeRaw);
+        state.rawInputs[code] = safeRaw;
+        if (cursor !== null) state.rawInputs[`${code}Cursor`] = cursor;
+        updateCardValues(code, code);
+      }
+
+      function applyScale(code, exponent) {
+        if (exponent === "clear") {
+          state.rawInputs[code] = "";
+          setAnchorFromInput(code, "");
+          return;
+        }
+        const currentInput = document.querySelector(`#amount-${code}`);
+        const currentValue = currentInput ? currentInput.value : state.rawInputs[code] || formatInputAmount(getAmountFor(code), code);
+        const scaled = scaleDecimalString(currentValue, Number(exponent));
+        state.rawInputs[code] = scaled;
+        setAnchorFromInput(code, scaled);
+      }
+
+      function removeCurrency(code) {
+        if (state.codes.length === 1) return;
+        const currentAnchor = state.anchorCode;
+        const currentAmount = state.anchorAmount;
+        state.codes = state.codes.filter((item) => item !== code);
+        if (code === currentAnchor) {
+          const nextAnchor = state.codes[0];
+          state.anchorCode = nextAnchor;
+          state.anchorAmount = currentAmount * state.rates[nextAnchor] / state.rates[currentAnchor];
+          state.rawInputs[nextAnchor] = formatInputAmount(state.anchorAmount, nextAnchor);
+        }
+        saveCodes();
+        renderCurrencyGrid(state.anchorCode);
+      }
+
+      function addCurrency(code) {
+        if (!SUPPORTED_CODES.includes(code) || state.codes.includes(code) || state.codes.length >= 4) return;
+        state.codes.push(code);
+        saveCodes();
+        renderCurrencyGrid();
+      }
+
+      function setStatus(mode, text) {
+        els.statusDot.className = `status-dot ${mode}`;
+        els.livePill.className = `live-pill ${mode}`;
+        els.rateStatus.textContent = text;
+        els.livePillText.textContent = mode === "loading" ? t("syncing") : mode === "offline" ? t("useRecentData") : t("synced");
+      }
+
+      function formatUpdateTime(value) {
+        if (!value) return t("noUpdate");
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return t("unknownUpdate");
+        return date.toLocaleString(language === "en" ? "en-US" : "zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      }
+
+      function showRateStatus() {
+        if (state.source === "fallback") {
+          setStatus("offline", t("unableToConnect"));
+          return;
+        }
+        const prefix = state.source === "cached" ? t("cachedPrefix") : t("todayPrefix");
+        setStatus("", `${prefix}${formatUpdateTime(state.updated)} ${t("updateSuffix")}`);
+      }
+
+      function applyRatePayload(payload, source) {
+        const incoming = payload?.rates || {};
+        state.rates = { ...FALLBACK_RATES, ...incoming, CNY: 1 };
+        state.updated = payload?.time_last_update_utc || null;
+        state.nextUpdate = payload?.time_next_update_utc || null;
+        state.source = source;
+        showRateStatus();
+        updateCardValues();
+      }
+
+      async function loadRates(force = false) {
+        state.loading = true;
+        els.refreshBtn.classList.add("is-loading");
+        setStatus("loading", t("fetchingLatest"));
+        let cached = null;
+        try { cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); } catch (error) { cached = null; }
+        const isFresh = cached?.savedAt && Date.now() - cached.savedAt < CACHE_TTL;
+        if (cached?.payload && isFresh && !force) {
+          applyRatePayload(cached.payload, "cached");
+          state.loading = false;
+          els.refreshBtn.classList.remove("is-loading");
+          return;
+        }
+        try {
+          const response = await fetch(API_URL, { cache: "no-store" });
+          if (!response.ok) throw new Error("rate request failed");
+          const payload = await response.json();
+          if (payload.result !== "success" || !payload.rates) throw new Error("invalid rate payload");
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), payload }));
+          applyRatePayload(payload, "api");
+        } catch (error) {
+          if (cached?.payload) applyRatePayload(cached.payload, "cached");
+          else applyRatePayload({ rates: FALLBACK_RATES }, "fallback");
+        } finally {
+          state.loading = false;
+          els.refreshBtn.classList.remove("is-loading");
+        }
+      }
+
+      els.currencyGrid.addEventListener("input", (event) => {
+        const input = event.target.closest("input[data-action='input']");
+        if (!input) return;
+        const cursor = input.selectionStart;
+        setAnchorFromInput(input.dataset.code, input.value, cursor);
+      });
+
+      els.currencyGrid.addEventListener("keydown", (event) => {
+        const input = event.target.closest("input[data-action='input']");
+        if (!input || input.dataset.code === "CNY") return;
+        const exponentMap = { k: 3, m: 6, b: 9 };
+        const exponent = exponentMap[event.key.toLowerCase()];
+        if (exponent === undefined) return;
+        event.preventDefault();
+        applyScale(input.dataset.code, exponent);
+      });
+
+      els.currencyGrid.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+        const code = button.dataset.code;
+        const action = button.dataset.action;
+        if (action === "remove") removeCurrency(code);
+        if (action === "scale") applyScale(code, button.dataset.exponent);
+        if (action === "copy") {
+          const amount = getAmountFor(code);
+          const exact = `${CURRENCIES[code].symbol} ${formatInputAmount(amount, code)}`;
+          try {
+            await navigator.clipboard.writeText(exact);
+            button.textContent = t("copied");
+            window.setTimeout(() => { button.textContent = t("copyExact"); }, 1300);
+          } catch (error) {
+            button.textContent = t("manualCopy");
+            window.setTimeout(() => { button.textContent = t("copyExact"); }, 1300);
+          }
+        }
+      });
+
+      els.currencyGrid.addEventListener("change", (event) => {
+        if (event.target.id === "addCurrency") addCurrency(event.target.value);
+      });
+
+      els.refreshBtn.addEventListener("click", () => loadRates(true));
+
+      function updateStaticLanguage() {
+        document.documentElement.lang = language === "en" ? "en" : "zh-CN";
+        document.title = t("pageTitle");
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          element.textContent = t(element.dataset.i18n);
+        });
+        document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+          element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+        });
+        const languageToggle = document.querySelector("#languageToggle");
+        if (languageToggle) {
+          languageToggle.textContent = language === "zh" ? "EN" : "中";
+          languageToggle.setAttribute("aria-label", language === "zh" ? "切换为英文" : "Switch to Chinese");
+          languageToggle.setAttribute("aria-pressed", String(language === "en"));
+        }
+        renderCurrencyGrid("", false);
+        showRateStatus();
+      }
+
+      document.querySelector("#languageToggle").addEventListener("click", () => {
+        language = language === "zh" ? "en" : "zh";
+        localStorage.setItem("fx-flip-language", language);
+        updateStaticLanguage();
+      });
+
+      saveCodes();
+      updateStaticLanguage();
+      loadRates();
+    </script>
+  </body>
+</html>

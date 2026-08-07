@@ -142,6 +142,9 @@ export const siteContent = {
       title: { zh: "KL Food Map", en: "KL Food Map" },
       status: { zh: "在线", en: "Live" },
       kind: { zh: "内部页面", en: "Internal page" },
+      sourceDir: "apps/food-map",
+      runtime: "static",
+      deployment: "main-site",
       path: "food-map/",
       featured: true,
       summary: {
@@ -170,6 +173,9 @@ export const siteContent = {
       title: { zh: "汇率转换", en: "Currency Converter" },
       status: { zh: "在线", en: "Live" },
       kind: { zh: "工具页", en: "Utility" },
+      sourceDir: "apps/currency-converter",
+      runtime: "static",
+      deployment: "main-site",
       path: "currency-converter/",
       featured: false,
       summary: {
@@ -198,6 +204,9 @@ export const siteContent = {
       title: { zh: "Voice Lab 演讲训练", en: "Voice Lab" },
       status: { zh: "在线", en: "Live" },
       kind: { zh: "训练工具", en: "Training tool" },
+      sourceDir: "apps/voice-lab",
+      runtime: "cloudflare-worker",
+      deployment: "voice-lab.gallagher.lol",
       path: "https://voice-lab.gallagher.lol/",
       featured: false,
       summary: {
