@@ -34,7 +34,7 @@ const pages = [
   {
     output: path.join("projects", "index.html"),
     title: `Projects - ${siteContent.site.title}`,
-    description: "项目入口页，当前包含 KL Food Map 和 Voice Lab，后续会继续扩展。",
+    description: "项目入口页，当前包含 KL Food Map、Voice Lab 和 Cardroom，后续会继续扩展。",
     currentPath: "projects/",
     priority: "0.9",
     body: renderProjectsPage(),
@@ -453,7 +453,7 @@ function renderProjectsPage() {
       <div class="hero-icon">🛠️</div>
       <div class="eyebrow">${langPair("项目", "PROJECTS")}</div>
       <h1 class="page-title">${langPair("项目入口", "Project shelf")}</h1>
-      <p class="page-desc">${langPair("这里会收纳当前项目和后续新增的小站。现在先从 KL Food Map 和 Voice Lab 开始，后面继续往这个集合里追加。", "A home for current work and future sites. KL Food Map and Voice Lab are the starting entries, with more to come.")}</p>
+      <p class="page-desc">${langPair("这里会收纳当前项目和后续新增的小站。现在先从 KL Food Map、Voice Lab 和 Cardroom 开始，后面继续往这个集合里追加。", "A home for current work and future sites. KL Food Map, Voice Lab, and Cardroom are the starting entries, with more to come.")}</p>
     </section>
 
     <section class="section-card">

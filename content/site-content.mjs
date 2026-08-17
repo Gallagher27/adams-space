@@ -230,6 +230,34 @@ export const siteContent = {
       ctaLabel: { zh: "开始练习", en: "Start practicing" },
     },
     {
+      slug: "cardroom",
+      icon: "◉",
+      title: { zh: "Cardroom 团队名片关系库", en: "Cardroom · Team Contact Atlas" },
+      status: { zh: "在线", en: "Live" },
+      kind: { zh: "团队工具", en: "Team workspace" },
+      path: "https://cards.gallagher.lol/",
+      featured: false,
+      summary: {
+        zh: "把团队名片整理成可共享、可检索的联系人数据库，并按公司查看关系网络。",
+        en: "A shared contact database that turns business cards into searchable company networks.",
+      },
+      homeSummary: {
+        zh: "团队名片 OCR 与关系网络工具，支持共享上传、公司视图和中英文使用。",
+        en: "A shared business-card workspace with OCR, company networks, and bilingual access.",
+      },
+      detail: {
+        zh: "共享名片库，支持图片上传、OCR 字段整理、重复项确认、公司关系图和中英文切换。",
+        en: "A shared card library for image upload, OCR field capture, duplicate review, company networks, and bilingual access.",
+      },
+      bullets: [
+        { zh: "支持团队共享上传和查看名片", en: "Share card uploads and browsing across the team" },
+        { zh: "按公司查看联系人和关系图", en: "Browse contacts and relationship graphs by company" },
+        { zh: "中英文切换，适合跨地区同事共同使用", en: "Switch between Chinese and English for cross-region teams" },
+      ],
+      tags: ["Cloudflare", "OCR / D1 / R2", "Team Contacts"],
+      ctaLabel: { zh: "打开名片库", en: "Open Cardroom" },
+    },
+    {
       slug: "project-archive",
       icon: "…",
       title: { zh: "更多项目", en: "More Projects" },
@@ -255,7 +283,7 @@ export const siteContent = {
     },
   ],
   projectShelfNote: {
-    zh: "现在这里有 KL Food Map 和 Voice Lab，后面新增项目时，只要补一条项目数据，再把页面目录接进来就可以了。",
-    en: "KL Food Map and Voice Lab are now part of the shelf. New projects can be added by extending the same small project list.",
+    zh: "现在这里有 KL Food Map、Voice Lab 和 Cardroom，后面新增项目时，只要补一条项目数据，再把页面目录接进来就可以了。",
+    en: "KL Food Map, Voice Lab, and Cardroom are now part of the shelf. New projects can be added by extending the same small project list.",
   },
 };
