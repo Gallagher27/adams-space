@@ -62,10 +62,18 @@ export async function deleteRemoteTimeline(id) {
   return body;
 }
 
-export async function deleteRemoteBlessing(id) {
-  const response = await fetch(`/api/admin/blessings/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "same-origin" });
+export async function deleteRemoteBlessing(id, ownerToken) {
+  const isOwnerDelete = Boolean(ownerToken);
+  const response = await fetch(isOwnerDelete ? `/api/blessings/${encodeURIComponent(id)}` : `/api/admin/blessings/${encodeURIComponent(id)}`, { method: "DELETE", headers: isOwnerDelete ? { "x-moon-owner-token": ownerToken } : undefined, credentials: "same-origin" });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.error || "祝福删除失败。");
+  return body;
+}
+
+export async function deleteRemoteBlessings() {
+  const response = await fetch("/api/admin/blessings", { method: "DELETE", credentials: "same-origin" });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || "祝福清理失败。");
   return body;
 }
 

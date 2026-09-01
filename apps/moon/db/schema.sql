@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS blessings (
   message TEXT NOT NULL DEFAULT '',
   audio_key TEXT,
   created_at TEXT NOT NULL,
-  ip_hash TEXT
+  ip_hash TEXT,
+  owner_token_hash TEXT
 );
 
 CREATE TABLE IF NOT EXISTS audit_logs (

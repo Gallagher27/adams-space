@@ -100,3 +100,29 @@ test("monthly rotation revokes old viewer sessions", async () => {
   assert.notEqual(rotated.password, "moon0825");
   assert.equal(rotated.password.length, 16);
 });
+
+test("lets a blessing owner revoke only their own entry and lets admin clear all", async () => {
+  const db = new D1Database();
+  const runtime = env(db);
+  const viewerLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "moon0825" }) });
+  const viewerCookie = cookieFrom(viewerLogin);
+  const ownerToken = "owner-token-one";
+  const first = await request("/api/blessings", { env: runtime, method: "POST", headers: { cookie: viewerCookie, "content-type": "application/json" }, body: JSON.stringify({ id: "blessing-one", name: "外婆", message: "慢慢长大", ownerToken }) });
+  assert.equal(first.status, 200);
+  const wrongOwner = await request("/api/blessings/blessing-one", { env: runtime, method: "DELETE", headers: { cookie: viewerCookie, "x-moon-owner-token": "wrong-token" } });
+  assert.equal(wrongOwner.status, 403);
+  const ownerDelete = await request("/api/blessings/blessing-one", { env: runtime, method: "DELETE", headers: { cookie: viewerCookie, "x-moon-owner-token": ownerToken } });
+  assert.equal(ownerDelete.status, 200);
+
+  for (const [id, name] of [["blessing-two", "爷爷"], ["blessing-three", "妈妈"]]) {
+    const response = await request("/api/blessings", { env: runtime, method: "POST", headers: { cookie: viewerCookie, "content-type": "application/json" }, body: JSON.stringify({ id, name, message: "一直都在", ownerToken: `${id}-owner` }) });
+    assert.equal(response.status, 200);
+  }
+  const adminLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "admin-test-secret", role: "admin" }) });
+  const adminCookie = cookieFrom(adminLogin);
+  const clear = await request("/api/admin/blessings", { env: runtime, method: "DELETE", headers: { cookie: adminCookie } });
+  assert.equal(clear.status, 200);
+  assert.equal((await clear.json()).count, 2);
+  const state = await request("/api/state", { env: runtime, headers: { cookie: viewerCookie } });
+  assert.deepEqual((await state.json()).blessings, []);
+});
