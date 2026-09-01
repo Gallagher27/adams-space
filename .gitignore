@@ -13,3 +13,4 @@ apps/*/.wrangler/
 apps/*/.vinext/
 apps/*/build/
 apps/*/wrangler.jsonc
+apps/moon/wrangler.cron.jsonc
