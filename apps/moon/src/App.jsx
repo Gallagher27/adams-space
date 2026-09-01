@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadAsset, removeAsset, saveAsset } from "./storage.js";
-import { createRemoteBlessing, createRemoteTimeline, deleteRemoteBlessing, deleteRemoteTimeline, detectRemote, getRemotePassword, loadRemoteState, login, remoteMediaUrl, uploadRemoteAudio } from "./api.js";
+import { createRemoteBlessing, createRemoteTimeline, deleteRemoteBlessing, deleteRemoteTimeline, detectRemote, getRemotePassword, loadRemoteState, login, loginAdmin, remoteMediaUrl, uploadRemoteAudio } from "./api.js";
 
 const BIRTH_TIME = new Date("2026-08-25T08:52:00+08:00");
 const LOCAL_ADMIN_PIN = "08250852";
@@ -15,6 +15,8 @@ const SEED_TIMELINE = [
 ];
 
 const STAR_POSITIONS = [[18, 22, 38], [66, 18, 30], [42, 46, 46], [79, 58, 34], [14, 70, 28], [56, 78, 36], [84, 31, 26], [30, 84, 32]];
+const MIC_REQUEST_TIMEOUT_MS = 10_000;
+const RECORDING_MIME_TYPES = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm", "audio/ogg;codecs=opus", "audio/ogg"];
 
 function useStoredState(key, initialValue) {
   const [value, setValue] = useState(() => {
@@ -201,20 +203,37 @@ function BlessingDialog({ onClose, onSave }) {
     if (recording || requestingMic) return;
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) return setError("当前浏览器不支持直接录音，可以先使用文字留言。");
     setRequestingMic(true);
+    let timeoutId;
+    let streamClaimed = false;
+    const mediaRequest = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const stream = await Promise.race([
+        mediaRequest,
+        new Promise((_, reject) => {
+          timeoutId = window.setTimeout(() => {
+            const timeoutError = new Error("麦克风请求超时");
+            timeoutError.name = "TimeoutError";
+            reject(timeoutError);
+          }, MIC_REQUEST_TIMEOUT_MS);
+        }),
+      ]);
+      streamClaimed = true;
+      if (timeoutId) window.clearTimeout(timeoutId);
+      const mimeType = RECORDING_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported?.(type)) ?? "";
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       setRequestingMic(false);
       streamRef.current = stream;
       recorderRef.current = recorder;
       chunksRef.current = [];
       recorder.ondataavailable = (event) => event.data.size && chunksRef.current.push(event.data);
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || mimeType || "audio/webm" });
         if (audioPreview) URL.revokeObjectURL(audioPreview);
         setAudioBlob(blob);
         setAudioPreview(URL.createObjectURL(blob));
         stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        recorderRef.current = null;
       };
       recorder.start();
       setRecording(true);
@@ -222,15 +241,22 @@ function BlessingDialog({ onClose, onSave }) {
         if (recorder.state === "recording") recorder.stop();
         setRecording(false);
       }, 60_000);
-    } catch {
+    } catch (error) {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      if (!streamClaimed) mediaRequest.then((lateStream) => lateStream.getTracks().forEach((track) => track.stop())).catch(() => {});
       setRequestingMic(false);
-      setError("没有取得麦克风权限，请允许访问后再试一次。");
+      if (error?.name === "TimeoutError") setError("麦克风没有响应。请检查浏览器权限后再试，或改用文字留言。");
+      else if (error?.name === "NotFoundError") setError("没有找到可用的麦克风，请检查设备后再试。");
+      else if (error?.name === "NotAllowedError" || error?.name === "SecurityError") setError("麦克风权限被拒绝，请在浏览器地址栏允许麦克风后再试。");
+      else setError("没有取得麦克风权限，请允许访问后再试一次。");
     }
   }
 
   function stopRecording() {
     if (recordingTimerRef.current) window.clearTimeout(recordingTimerRef.current);
-    recorderRef.current?.stop();
+    const recorder = recorderRef.current;
+    if (recorder?.state === "recording") recorder.stop();
+    else streamRef.current?.getTracks().forEach((track) => track.stop());
     setRecording(false);
   }
 
@@ -267,7 +293,7 @@ function BlessingDialog({ onClose, onSave }) {
 }
 
 function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteBlessing, remote }) {
-  const [unlocked, setUnlocked] = useState(remote);
+  const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -277,6 +303,20 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
   function unlock(event) {
     event.preventDefault();
     if (pin === LOCAL_ADMIN_PIN) { setUnlocked(true); setError(""); } else setError("密码不正确。");
+  }
+
+  async function unlockRemote(event) {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      await loginAdmin(pin);
+      setUnlocked(true);
+      setError("");
+    } catch (unlockError) {
+      setError(unlockError.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function addItem(event) {
@@ -295,14 +335,14 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
   }
 
   return (
-    <Modal title={unlocked ? "本地内容管理" : "进入管理模式"} onClose={onClose} wide={unlocked}>
+    <Modal title={unlocked ? (remote ? "共享内容管理" : "本地内容管理") : "进入管理模式"} onClose={onClose} wide={unlocked}>
       {!unlocked ? (
-        <form className="form-stack" onSubmit={unlock}>
+        <form className="form-stack" onSubmit={remote ? unlockRemote : unlock}>
           <p className="local-note">这是受保护的管理入口，新增内容会记录到家庭时间线。</p>
-          <label>本地演示密码<input type="password" value={pin} onChange={(event) => setPin(event.target.value)} autoFocus /></label>
+          <label>{remote ? "管理员密码" : "本地演示密码"}<input type="password" value={pin} onChange={(event) => setPin(event.target.value)} autoFocus autoComplete="current-password" /></label>
           {!remote && <p className="helper-text">演示密码：08250852</p>}
           {error && <p className="form-error">{error}</p>}
-          <button className="primary-button" type="submit">进入管理</button>
+          <button className="primary-button" type="submit" disabled={saving}>{saving ? "正在验证…" : "进入管理"}</button>
         </form>
       ) : (
         <div className="admin-layout">
