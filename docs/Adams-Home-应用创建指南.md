@@ -23,7 +23,8 @@ adams-space/
 ├─ apps/
 │  ├─ food-map/
 │  ├─ currency-converter/
-│  └─ voice-lab/
+│  ├─ voice-lab/
+│  └─ moon/
 ├─ assets/                         # 主站公共样式和图标
 ├─ content/site-content.mjs        # 主站内容和应用登记
 ├─ scripts/build.mjs               # 主站构建脚本
@@ -153,6 +154,8 @@ path: "https://weather.gallagher.lol/",
 
 主站只负责提供项目入口，不会把它强行打包成静态页面。
 
+Moon 按同样规则登记在 `apps/moon/`，公开地址使用 `https://moon.gallagher.lol/`。它的 `wrangler.example.jsonc` 只提供绑定模板；真实 D1 ID、R2 桶名和密码 Secret 只在 Cloudflare 配置，不进入 GitHub。
+
 ## 六、不要把这些文件拖进 GitHub
 
 以下文件不要提交：
@@ -268,6 +271,7 @@ GitHub 中的自动检查会验证：
 
 - 主站是公开静态页面，不保存 API Key。
 - Voice Lab 的 Google TTS API Key 只放在本地环境变量或 Cloudflare Secret 中。
+- Moon 的 `MOON_INITIAL_PASSWORD`、`MOON_ENCRYPTION_KEY` 和 `MOON_SESSION_SECRET` 只放在 Cloudflare Secret 中。
 - 访问密码只放在 Cloudflare 的环境变量中。
 - 不要把真实 `.env` 文件、API Key、密码或私钥提交到 GitHub。
 

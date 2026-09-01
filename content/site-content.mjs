@@ -258,6 +258,37 @@ export const siteContent = {
       ctaLabel: { zh: "打开名片库", en: "Open Cardroom" },
     },
     {
+      slug: "moon",
+      icon: "☾",
+      title: { zh: "时沐恩 · Moon", en: "Shimuen · Moon" },
+      status: { zh: "私享入口", en: "Private" },
+      kind: { zh: "家庭纪念页", en: "Family journal" },
+      sourceDir: "apps/moon",
+      runtime: "cloudflare-worker",
+      deployment: "moon.gallagher.lol",
+      path: "https://moon.gallagher.lol/",
+      featured: false,
+      summary: {
+        zh: "给家人分享的生命时间线：持续计时、祝福星图、文字与语音留言，以及可持续追加的记录。",
+        en: "A private family timeline with a live age counter, blessing constellation, voice notes, and room to keep growing.",
+      },
+      homeSummary: {
+        zh: "时沐恩的家庭私享时间线，记录每一个值得回看的片段。",
+        en: "Shimuen's private family timeline for the moments worth returning to.",
+      },
+      detail: {
+        zh: "Moon 是独立的 Cloudflare Worker 子项目，和主站使用同一套项目登记逻辑，但内容与访问保护由自己的 D1、R2 和密码会话负责。",
+        en: "Moon is an independent Cloudflare Worker app registered alongside the main site, with its own D1, R2, and password-protected session.",
+      },
+      bullets: [
+        { zh: "持续跳动的出生计时与生命时间线", en: "A live birth counter and growing life timeline" },
+        { zh: "家人可以留下文字或语音祝福", en: "Family can leave text or voice blessings" },
+        { zh: "管理员可追加图片、视频、音频和文档", en: "The admin can add photos, video, audio, and documents" },
+      ],
+      tags: ["Cloudflare Worker", "D1 / R2", "Private Family Journal"],
+      ctaLabel: { zh: "打开 Moon", en: "Open Moon" },
+    },
+    {
       slug: "project-archive",
       icon: "…",
       title: { zh: "更多项目", en: "More Projects" },
@@ -283,7 +314,7 @@ export const siteContent = {
     },
   ],
   projectShelfNote: {
-    zh: "现在这里有 KL Food Map、Voice Lab 和 Cardroom，后面新增项目时，只要补一条项目数据，再把页面目录接进来就可以了。",
-    en: "KL Food Map, Voice Lab, and Cardroom are now part of the shelf. New projects can be added by extending the same small project list.",
+    zh: "现在这里有 KL Food Map、Voice Lab、Cardroom 和 Moon，后面新增项目时，只要补一条项目数据，再把页面目录接进来就可以了。",
+    en: "KL Food Map, Voice Lab, Cardroom, and Moon are now part of the shelf. New projects can be added by extending the same small project list.",
   },
 };

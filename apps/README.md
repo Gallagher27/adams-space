@@ -7,6 +7,7 @@
 - `food-map/`：静态的吉隆坡美食地图
 - `currency-converter/`：静态汇率转换工具
 - `voice-lab/`：独立的 Cloudflare Worker / Vinext 应用
+- `moon/`：时沐恩家庭纪念页，独立的 Cloudflare Worker 应用
 
 ## 新增应用流程
 
@@ -24,3 +25,4 @@
 - 静态应用由主站构建流程复制到公开目录。
 - 有 API Key、登录、数据库或 Cloudflare Worker 的应用保留自己的运行时和部署配置。
 - 密钥只放在对应应用的本地环境变量或 Cloudflare Secret，不进入主站和 GitHub。
+- `moon/` 使用 `moon.gallagher.lol` 作为独立子域名；主站只提供项目入口，不把家庭内容混入主站静态目录。

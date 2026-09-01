@@ -40,5 +40,7 @@ jobs:
           node-version: 22
       - name: Install Voice Lab dependencies
         run: npm ci --prefix apps/voice-lab
+      - name: Install Moon dependencies
+        run: npm ci --prefix apps/moon
       - name: Run the complete project check
         run: npm run verify
