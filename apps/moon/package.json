@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prepare-worker-build.mjs",
+    "build": "vite build && node scripts/prepare-pages-build.mjs",
     "preview": "vite preview",
-    "test:worker": "npm run build && node --test tests/worker.test.mjs",
-    "deploy": "npm run build && wrangler deploy"
+    "test:pages": "npm run build && node --test tests/pages.test.mjs",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name moon"
   },
   "dependencies": {
     "@vitejs/plugin-react": "5.0.4",

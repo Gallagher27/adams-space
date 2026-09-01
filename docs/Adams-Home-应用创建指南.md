@@ -106,7 +106,7 @@ content/site-content.mjs
 | --- | --- |
 | `slug` | 应用唯一名称，不能重复 |
 | `sourceDir` | 本地源码目录，必须位于 `apps/` 下 |
-| `runtime` | 应用运行方式，例如 `static` 或 `cloudflare-worker` |
+| `runtime` | 应用运行方式，例如 `static`、`cloudflare-worker` 或 `cloudflare-pages` |
 | `deployment` | 部署目标，例如 `main-site` 或 Cloudflare 项目域名 |
 | `path` | 网站公开地址；主站内部页面使用相对路径，外部应用使用完整 URL |
 
@@ -153,6 +153,8 @@ path: "https://weather.gallagher.lol/",
 - Cloudflare 配置
 
 主站只负责提供项目入口，不会把它强行打包成静态页面。
+
+如果使用 Cloudflare Pages（例如 Moon），运行方式填写 `cloudflare-pages`，并在 Pages 项目中设置源码根目录、构建命令和输出目录；Pages Functions、D1、R2 与密钥都由该子项目单独绑定。
 
 Moon 按同样规则登记在 `apps/moon/`，公开地址使用 `https://moon.gallagher.lol/`。它的 `wrangler.example.jsonc` 只提供绑定模板；真实 D1 ID、R2 桶名和密码 Secret 只在 Cloudflare 配置，不进入 GitHub。
 

@@ -98,4 +98,4 @@ npm run preview
 
 ## 部署
 
-主站通过 GitHub Pages 自动部署，推送到 `main` 分支即生效。需要独立运行时的应用（例如 `apps/moon/`）仍按各自目录中的 Cloudflare Worker 配置发布，主站只维护统一入口。
+主站通过 GitHub Pages 自动部署，推送到 `main` 分支即生效。需要独立运行时的应用（例如 `apps/moon/`）按各自目录中的 Cloudflare Pages 配置发布，主站只维护统一入口；不会把子项目托管到第三方站点。

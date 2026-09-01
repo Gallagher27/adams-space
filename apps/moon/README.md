@@ -27,20 +27,20 @@ npm run dev
 
 本地预览的管理入口演示密码为 `08250852`，只用于离线演示。共享版由服务端访问密码保护，密码不写入前端；每月自动轮换，并保留登录、查看、上传与删除的审计记录。
 
-共享版的时间线、留言、录音和管理员上传内容由 Cloudflare 的 D1 与 R2 保存，家人使用同一入口即可看到最新内容。录音只在用户明确点击并允许浏览器麦克风后开始。
+共享版的时间线、留言、录音和管理员上传内容由 Cloudflare Pages Functions、D1 与 R2 保存，家人使用同一入口即可看到最新内容。录音只在用户明确点击并允许浏览器麦克风后开始。
 
 ## Cloudflare 部署
 
 1. 在 Cloudflare 创建 D1 数据库（建议名称 `moon-db`）和 R2 存储桶（建议名称 `moon-media`）。
 2. 复制 `wrangler.example.jsonc` 为本机的 `wrangler.jsonc`，把 `database_id` 换成真实 D1 ID；这个本机文件不要提交到 GitHub。
-3. 在 Cloudflare Worker 的 Secrets 中配置 `MOON_INITIAL_PASSWORD`、`MOON_ENCRYPTION_KEY`、`MOON_SESSION_SECRET`，三个值都不要写入仓库。
-4. 在 `moon.gallagher.lol` 配置 Worker 路由或自定义域名，并把 DNS 交给 Cloudflare 托管。
-5. 运行 `npm install`、`npm run deploy`。首次部署后，执行 `wrangler d1 migrations apply moon-db --remote`。
+3. 在 Cloudflare Pages 项目的 Settings → Environment variables 中配置 `MOON_INITIAL_PASSWORD`、`MOON_ENCRYPTION_KEY`、`MOON_SESSION_SECRET`，三个值都不要写入仓库。
+4. 在 Pages 项目绑定 D1（`DB`）与 R2（`MEDIA`），并把自定义域名设为 `moon.gallagher.lol`；DNS 继续交给 Cloudflare 托管。
+5. GitHub 构建设置使用 Root directory `apps/moon`、Build command `npm run build`、Build output directory `dist`。首次部署后，执行 `wrangler d1 migrations apply moon-db --remote`。
 
-`wrangler.example.jsonc` 中的月度 Cron 会在每月 UTC 月初触发密码轮换；站点会在 D1 中记录版本和审计事件。
+密码版本和审计事件会记录在 D1 中；如果要保留每月轮换，可在 Cloudflare 的定时任务中调用管理轮换流程。
 
-本地完成构建后可以运行 `npm run test:worker`，检查 Worker 的静态回退、API 边界和发布产物。
+本地完成构建后可以运行 `npm run test:pages`，检查 Pages Functions 与发布产物。
 
 ## 当前发布边界
 
-主站 `gallagher.lol` 不会被改动，子站使用 `moon.gallagher.lol`。发布前需要在 Cloudflare 完成数据库、媒体存储、Worker 路由和运行时密钥绑定，并在真实浏览器里确认语音录制能取得麦克风权限；未完成这些检查时不应把链接交给家人。
+主站 `gallagher.lol` 不会被改动，子站使用 `moon.gallagher.lol`。发布前需要在 Cloudflare 完成数据库、媒体存储、Pages Functions 和运行时密钥绑定，并在真实浏览器里确认语音录制能取得麦克风权限；未完成这些检查时不应把链接交给家人。

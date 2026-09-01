@@ -1,13 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "moon",
-  "main": "dist/server/index.js",
   "compatibility_date": "2026-09-01",
-  "compatibility_flags": ["nodejs_compat"],
-  "assets": {
-    "directory": "dist/client",
-    "binding": "ASSETS"
-  },
+  "pages_build_output_dir": "dist",
   "d1_databases": [
     {
       "binding": "DB",
@@ -22,8 +17,9 @@
       "bucket_name": "moon-media"
     }
   ],
-  "triggers": {
-    "crons": ["0 0 1 * *"]
+  "vars": {
+    "APP_NAME": "Moon",
+    "MOON_HOSTNAME": "moon.gallagher.lol"
   },
   "observability": {
     "enabled": true

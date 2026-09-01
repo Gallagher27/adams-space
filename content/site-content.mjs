@@ -264,7 +264,7 @@ export const siteContent = {
       status: { zh: "私享入口", en: "Private" },
       kind: { zh: "家庭纪念页", en: "Family journal" },
       sourceDir: "apps/moon",
-      runtime: "cloudflare-worker",
+      runtime: "cloudflare-pages",
       deployment: "moon.gallagher.lol",
       path: "https://moon.gallagher.lol/",
       featured: false,
@@ -277,15 +277,15 @@ export const siteContent = {
         en: "Shimuen's private family timeline for the moments worth returning to.",
       },
       detail: {
-        zh: "Moon 是独立的 Cloudflare Worker 子项目，和主站使用同一套项目登记逻辑，但内容与访问保护由自己的 D1、R2 和密码会话负责。",
-        en: "Moon is an independent Cloudflare Worker app registered alongside the main site, with its own D1, R2, and password-protected session.",
+        zh: "Moon 是独立的 Cloudflare Pages 子项目，和主站使用同一套项目登记逻辑，但内容与访问保护由自己的 Pages Functions、D1、R2 和密码会话负责。",
+        en: "Moon is an independent Cloudflare Pages app registered alongside the main site, with its own Pages Functions, D1, R2, and password-protected session.",
       },
       bullets: [
         { zh: "持续跳动的出生计时与生命时间线", en: "A live birth counter and growing life timeline" },
         { zh: "家人可以留下文字或语音祝福", en: "Family can leave text or voice blessings" },
         { zh: "管理员可追加图片、视频、音频和文档", en: "The admin can add photos, video, audio, and documents" },
       ],
-      tags: ["Cloudflare Worker", "D1 / R2", "Private Family Journal"],
+      tags: ["Cloudflare Pages", "D1 / R2", "Private Family Journal"],
       ctaLabel: { zh: "打开 Moon", en: "Open Moon" },
     },
     {
