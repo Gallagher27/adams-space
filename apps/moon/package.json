@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build && node scripts/prepare-pages-build.mjs",
     "preview": "vite preview",
-    "test:pages": "npm run build && node --test tests/pages.test.mjs",
+    "test:pages": "npm run build && node --test tests/pages.test.mjs tests/worker.test.mjs",
     "deploy": "npm run build && wrangler pages deploy dist --project-name moon"
   },
   "dependencies": {
