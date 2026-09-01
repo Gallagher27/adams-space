@@ -4,8 +4,9 @@
   "scripts": {
     "check:apps": "node scripts/check-apps.mjs",
     "check:voice-lab": "npm --prefix apps/voice-lab run lint && npm --prefix apps/voice-lab test",
+    "check:moon": "npm --prefix apps/moon run test:worker",
     "build": "npm run check:apps && node scripts/build.mjs",
-    "verify": "npm run check:apps && npm run build && npm run check:voice-lab",
+    "verify": "npm run check:apps && npm run build && npm run check:voice-lab && npm run check:moon",
     "preview": "python3 -m http.server 4173"
   }
 }

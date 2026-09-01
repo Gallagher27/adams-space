@@ -1,0 +1,4 @@
+# Local Worker development only. Never commit real values.
+MOON_INITIAL_PASSWORD=replace-with-local-password
+MOON_ENCRYPTION_KEY=replace-with-a-long-random-secret
+MOON_SESSION_SECRET=replace-with-a-different-long-random-secret

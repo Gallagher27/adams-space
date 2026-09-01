@@ -10,7 +10,7 @@
 /projects/     → 项目入口页
 /food-map/     → 吉隆坡美食地图
 /currency-converter/ → 独立汇率转换工具
-/apps/         → 三个平级应用的源码目录
+/apps/         → 平级应用的源码目录（含 Moon 家庭纪念页）
 /assets/       → 公共样式
 /content/      → 站点内容数据
 /scripts/      → 静态页面构建脚本
@@ -98,4 +98,4 @@ npm run preview
 
 ## 部署
 
-通过 GitHub Pages 自动部署，推送到 `main` 分支即生效。
+主站通过 GitHub Pages 自动部署，推送到 `main` 分支即生效。需要独立运行时的应用（例如 `apps/moon/`）仍按各自目录中的 Cloudflare Worker 配置发布，主站只维护统一入口。
