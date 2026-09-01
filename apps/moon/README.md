@@ -43,6 +43,7 @@ npm run dev
 npx wrangler deploy --config wrangler.cron.jsonc
 npx wrangler secret put MOON_ENCRYPTION_KEY --config wrangler.cron.jsonc
 npx wrangler secret put MOON_INITIAL_PASSWORD --config wrangler.cron.jsonc
+npx wrangler secret put MOON_ADMIN_PASSWORD --config wrangler.cron.jsonc
 ```
 
 这个 Worker 每天运行一次，只在进入新月份时生成新的随机访问密码；管理员使用独立的 `MOON_ADMIN_PASSWORD` 登录管理入口后，可以查看本月密码。Cron Worker 和 Pages 项目都必须配置相同的加密密钥。
