@@ -12,9 +12,16 @@ export async function detectRemote() {
 }
 
 export async function login(password) {
-  const response = await fetch("/api/auth/login", { method: "POST", headers: jsonHeaders, credentials: "same-origin", body: JSON.stringify({ password }) });
+  const response = await fetch("/api/auth/login", { method: "POST", headers: jsonHeaders, credentials: "same-origin", body: JSON.stringify({ password, role: "viewer" }) });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.error || "登录失败，请稍后再试。");
+  return body;
+}
+
+export async function loginAdmin(password) {
+  const response = await fetch("/api/auth/login", { method: "POST", headers: jsonHeaders, credentials: "same-origin", body: JSON.stringify({ password, role: "admin" }) });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || "管理入口登录失败，请稍后再试。");
   return body;
 }
 
