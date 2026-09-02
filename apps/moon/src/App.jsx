@@ -19,19 +19,19 @@ const MIC_REQUEST_TIMEOUT_MS = 30_000;
 const RECORDING_MIME_TYPES = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm", "audio/ogg;codecs=opus", "audio/ogg"];
 
 const TEXT_PROMPTS = [
-  { question: "等沐恩长大一点，你最想和他一起做什么？", hint: "一顿饭、一次散步，或一件很小的家常事都很好。" },
-  { question: "想把今天哪一个温柔瞬间，留给未来的他？", hint: "不用写得完整，想到什么就留下什么。" },
-  { question: "如果他在很多年后读到这句话，你希望他先知道什么？", hint: "可以是一句鼓励，也可以是一句很普通的惦念。" },
-  { question: "给沐恩留一个只有家人才会说的小小祝福吧？", hint: "一个称呼、一种味道、一个拥抱，都可以成为他的记忆。" },
-  { question: "今天的你，想把哪一种心情送给他？", hint: "轻松一点也没关系，真诚比漂亮更重要。" },
+  { question: "想和沐恩说一句什么？", hint: "不用写得完整，想到什么就写什么。" },
+  { question: "今天想祝福他什么？", hint: "一句很普通的话也很好。" },
+  { question: "想留下一点小小的期盼吗？", hint: "可以是明天、周末，或很久以后的事。" },
+  { question: "以后想和他一起做什么？", hint: "去散步、吃顿饭，或做一件小事都可以。" },
+  { question: "想告诉他今天发生的一件小事吗？", hint: "不需要特别，只要是你想留下的。" },
 ];
 
 const VOICE_PROMPTS = [
-  { question: "先叫一次沐恩的名字，再对他说一句现在最想说的话。", hint: "不必准备，像在他身边聊天一样就好。" },
-  { question: "说说你此刻在哪里，又听见了哪一种声音。", hint: "以后他回听时，也许就能回到今天的这一刻。" },
-  { question: "像讲一个小小的睡前故事那样，分享今天的一件事。", hint: "几十秒就足够，停顿和笑声也值得被留下。" },
-  { question: "从“等你长大后……”开始，留一句想带他去听的话。", hint: "可以是一份期待，也可以只是轻轻的一句想念。" },
-  { question: "录下你最想让他记住的一句家常话。", hint: "声音里的语气，会比文字多留住一点温度。" },
+  { question: "对沐恩说一句你好吧。", hint: "像平时和他说话一样就好。" },
+  { question: "叫一次他的名字，再留一句祝福。", hint: "几秒钟也可以。" },
+  { question: "说说今天的天气，或你正在做什么。", hint: "让他以后听见今天的一点声音。" },
+  { question: "告诉他一件以后想一起做的小事。", hint: "散步、看书、吃饭都可以。" },
+  { question: "留一句以后再听，也会觉得安心的话。", hint: "不用准备，慢慢说就好。" },
 ];
 
 function hashText(value) {
@@ -521,9 +521,10 @@ function BlessingDialog({ onClose, onSave }) {
           <button type="button" className={mode === "voice" ? "active" : ""} onClick={() => switchMode("voice")} disabled={submitting}>录一段声音</button>
         </div>
         <div className="prompt-card" aria-live="polite">
-          <div><p className="eyebrow">{mode === "voice" ? "A SMALL VOICE PROMPT" : "A SMALL WRITING PROMPT"}</p><button type="button" onClick={shufflePrompt} disabled={submitting}>换一个灵感</button></div>
+          <div><p className="eyebrow">{mode === "voice" ? "ONE SMALL QUESTION" : "ONE SMALL QUESTION"}</p><button type="button" onClick={shufflePrompt} disabled={submitting}>换一个问题</button></div>
           <strong>{activePrompt.question}</strong>
           <span>{activePrompt.hint}</span>
+          <small>任选一个问题，也可以完全按自己的方式说。</small>
         </div>
         {mode === "text" ? (
           <label>想对沐恩说的话<textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={activePrompt.question} rows="5" disabled={submitting} /></label>

@@ -127,6 +127,7 @@ button:disabled, input:disabled, textarea:disabled { cursor: not-allowed; }
 .prompt-card button:disabled { opacity: 0.48; }
 .prompt-card strong { color: var(--paper); font-family: "Songti SC", "STSong", serif; font-size: 17px; font-weight: 400; line-height: 1.6; letter-spacing: 0.04em; }
 .prompt-card span { color: var(--text-soft); font-size: 12px; line-height: 1.65; }
+.prompt-card small { color: var(--gold-dim); font-size: 10px; line-height: 1.55; letter-spacing: 0.04em; }
 .recorder-box { border: 1px solid var(--line); padding: 20px; display: grid; gap: 16px; text-align: center; background: rgba(7, 20, 38, 0.34); }
 .recorder-box.is-requesting { border-color: var(--gold); }
 .recorder-box.is-submitting { opacity: 0.72; }
