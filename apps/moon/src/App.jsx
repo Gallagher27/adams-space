@@ -18,6 +18,22 @@ const SEED_TIMELINE = [
 const MIC_REQUEST_TIMEOUT_MS = 30_000;
 const RECORDING_MIME_TYPES = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm", "audio/ogg;codecs=opus", "audio/ogg"];
 
+const TEXT_PROMPTS = [
+  { question: "想和沐恩说一句什么？", hint: "不用写得完整，想到什么就写什么。" },
+  { question: "今天想祝福他什么？", hint: "一句很普通的话也很好。" },
+  { question: "想留下一点小小的期盼吗？", hint: "可以是明天、周末，或很久以后的事。" },
+  { question: "以后想和他一起做什么？", hint: "去散步、吃顿饭，或做一件小事都可以。" },
+  { question: "想告诉他今天发生的一件小事吗？", hint: "不需要特别，只要是你想留下的。" },
+];
+
+const VOICE_PROMPTS = [
+  { question: "对沐恩说一句你好吧。", hint: "像平时和他说话一样就好。" },
+  { question: "叫一次他的名字，再留一句祝福。", hint: "几秒钟也可以。" },
+  { question: "说说今天的天气，或你正在做什么。", hint: "让他以后听见今天的一点声音。" },
+  { question: "告诉他一件以后想一起做的小事。", hint: "散步、看书、吃饭都可以。" },
+  { question: "留一句以后再听，也会觉得安心的话。", hint: "不用准备，慢慢说就好。" },
+];
+
 function hashText(value) {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -33,10 +49,8 @@ function starPlacement(seed, index = 0) {
     value = (Math.imul(value, 1664525) + 1013904223) >>> 0;
     return value / 4294967296;
   };
-  return { left: `${10 + next() * 80}%`, top: `${10 + next() * 76}%`, size: 23 + Math.round(next() * 21), delay: `${-(next() * 4.6).toFixed(2)}s`, opacity: 0.34 + next() * 0.36 };
+  return { left: `${10 + next() * 80}%`, top: `${10 + next() * 76}%`, size: 25 + Math.round(next() * 21), delay: `${-(next() * 4.6).toFixed(2)}s`, opacity: 0.78 + next() * 0.22 };
 }
-
-const CONSTELLATION_DUST = Array.from({ length: 15 }, (_, index) => starPlacement(`dust-${index}`, index));
 
 function createOwnerToken() {
   return `${crypto.randomUUID()}-${crypto.randomUUID()}`;
@@ -93,21 +107,30 @@ function classifyFile(file) {
   return "document";
 }
 
-function Modal({ title, children, onClose, wide = false }) {
+function Modal({ title, children, onClose, wide = false, busy = false }) {
   useEffect(() => {
-    const onKeyDown = (event) => event.key === "Escape" && onClose();
+    const onKeyDown = (event) => event.key === "Escape" && !busy && onClose();
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [onClose, busy]);
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
+    <div className="modal-backdrop" role="presentation" onMouseDown={() => { if (!busy) onClose(); }}>
       <section className={`modal-panel ${wide ? "modal-wide" : ""}`} role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => event.stopPropagation()}>
         <div className="modal-heading">
           <div><p className="eyebrow">MOON · LOCAL</p><h2>{title}</h2></div>
-          <button className="text-button" type="button" onClick={onClose}>关闭</button>
+          <button className="text-button" type="button" onClick={onClose} disabled={busy}>{busy ? "处理中…" : "关闭"}</button>
         </div>
         {children}
       </section>
+    </div>
+  );
+}
+
+function ProcessingNotice({ message, detail }) {
+  return (
+    <div className="processing-notice" role="status" aria-live="polite">
+      <span className="loading-orbit" aria-hidden="true" />
+      <span><strong>{message}</strong><small>{detail}</small></span>
     </div>
   );
 }
@@ -167,19 +190,24 @@ function Timeline({ items, onOpen }) {
 }
 
 function StarMap({ blessings, onOpen, onStart, ownerTokens }) {
+  const hasBlessings = blessings.length > 0;
   return (
     <div className="star-map" aria-label="家人的祝福星图">
-      {CONSTELLATION_DUST.map((dust, index) => <img className="constellation-dust" key={`dust-${index}`} src="/assets/art/blessing-star.png" alt="" aria-hidden="true" style={{ left: dust.left, top: dust.top, width: dust.size, height: dust.size, animationDelay: dust.delay, opacity: dust.opacity }} />)}
-      <p className="star-map-label">每一份祝福，都会成为陪伴沐恩的一颗星</p>
-      {blessings.length === 0 ? (
-        <button className="empty-star" type="button" onClick={onStart}><img src="/assets/art/blessing-star.png" alt="" /><span>点亮第一颗星</span></button>
+      <span className="star-map-status">{hasBlessings ? `已点亮 ${blessings.length} 颗星` : "第一颗星正在等你"}</span>
+      <p className="star-map-label">{hasBlessings ? "一颗亮星，对应一份祝福。轻触星点，看看是谁留下的。" : "这里不会有多余的星；第一份留言，会点亮第一颗。"}</p>
+      {!hasBlessings ? (
+        <button className="empty-star" type="button" onClick={onStart} aria-label="留下第一句祝福，点亮第一颗星">
+          <img src="/assets/art/blessing-star.png" alt="" />
+          <strong>点亮第一颗星</strong>
+          <small>写一句话，或录下一段声音</small>
+        </button>
       ) : blessings.map((blessing, index) => {
         const placement = starPlacement(blessing.id, index);
         const isOwned = Boolean(ownerTokens[blessing.id]);
         return (
           <button className={`blessing-star ${blessing.audioId || blessing.audioKey ? "voice-star" : ""} ${isOwned ? "owned-star" : ""}`} type="button" key={blessing.id} style={{ left: placement.left, top: placement.top, width: placement.size, height: placement.size, animationDelay: placement.delay }} onClick={() => onOpen(blessing)} aria-label={`打开 ${blessing.name} 留下的祝福${isOwned ? " · 我的祝福" : ""}`} title={blessing.name}>
             <img src="/assets/art/blessing-star.png" alt="" />
-            <span className="star-tooltip" aria-hidden="true">{blessing.name}</span>
+            <span className="star-tooltip" aria-hidden="true"><strong>{blessing.name} 的留言</strong><small>轻触查看</small></span>
           </button>
         );
       })}
@@ -203,7 +231,7 @@ function BlessingsPanel({ blessings, onOpen, onStart, ownerTokens }) {
           </button>
         ))}
       </div>
-      <button className="primary-button" type="button" onClick={onStart}>留下祝福</button>
+      <button className="primary-button" type="button" onClick={onStart}>{blessings.length ? "点亮一颗新星" : "留下第一句祝福"}</button>
       <div className="split-actions" aria-hidden="true"><span>写句话</span><span>录一段声音</span></div>
     </aside>
   );
@@ -219,6 +247,9 @@ function BlessingDialog({ onClose, onSave }) {
   const [audioPreview, setAudioPreview] = useState("");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [savingStatus, setSavingStatus] = useState("");
+  const [promptIndex, setPromptIndex] = useState(() => Math.floor(Math.random() * TEXT_PROMPTS.length));
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
@@ -232,6 +263,24 @@ function BlessingDialog({ onClose, onSave }) {
   const waveformAnimationRef = useRef(null);
   const analyserRef = useRef(null);
   const audioContextRef = useRef(null);
+  const submitLockRef = useRef(false);
+  const prompts = mode === "voice" ? VOICE_PROMPTS : TEXT_PROMPTS;
+  const activePrompt = prompts[promptIndex % prompts.length];
+
+  function switchMode(nextMode) {
+    if (submitting) return;
+    setMode(nextMode);
+    const nextPrompts = nextMode === "voice" ? VOICE_PROMPTS : TEXT_PROMPTS;
+    setPromptIndex(Math.floor(Math.random() * nextPrompts.length));
+  }
+
+  function shufflePrompt() {
+    if (submitting || prompts.length < 2) return;
+    setPromptIndex((current) => {
+      const next = Math.floor(Math.random() * (prompts.length - 1));
+      return next >= current % prompts.length ? next + 1 : next;
+    });
+  }
 
   function paintWaveform(samples = waveformSamplesRef.current, active = false) {
     const canvas = waveformCanvasRef.current;
@@ -446,23 +495,41 @@ function BlessingDialog({ onClose, onSave }) {
   async function submit(event) {
     event.preventDefault();
     setError("");
+    if (submitting || submitLockRef.current) return;
     if (!name.trim()) return setError("请先留下你的称呼。");
     if (!message.trim() && !audioBlob) return setError("请写一句话，或者录下一段声音。");
-    onSave({ id: crypto.randomUUID(), name: name.trim(), message: message.trim(), audioBlob, createdAt: new Date().toISOString() });
+    if (recording || requestingMic) return setError("请先结束录音，确认声音已经保存后再点亮这颗星。");
+    submitLockRef.current = true;
+    setSubmitting(true);
+    setSavingStatus(audioBlob ? "正在准备上传这段声音…" : "正在点亮这颗星…");
+    try {
+      await onSave({ id: crypto.randomUUID(), name: name.trim(), message: message.trim(), audioBlob, createdAt: new Date().toISOString() }, setSavingStatus);
+    } catch (saveError) {
+      setError(saveError?.message || "祝福暂时没有保存成功，请稍后重试。");
+    } finally {
+      submitLockRef.current = false;
+      setSubmitting(false);
+    }
   }
 
   return (
-    <Modal title="留下一颗祝福星" onClose={onClose}>
-      <form className="form-stack" onSubmit={submit}>
-        <label>你的称呼<input value={name} onChange={(event) => setName(event.target.value)} placeholder="例如：外婆" /></label>
+    <Modal title="留下一颗祝福星" onClose={onClose} busy={submitting}>
+      <form className="form-stack" onSubmit={submit} aria-busy={submitting}>
+        <label>你的称呼<input value={name} onChange={(event) => setName(event.target.value)} placeholder="例如：外婆" disabled={submitting} /></label>
         <div className="mode-switch" aria-label="留言方式">
-          <button type="button" className={mode === "text" ? "active" : ""} onClick={() => setMode("text")}>写句话</button>
-          <button type="button" className={mode === "voice" ? "active" : ""} onClick={() => setMode("voice")}>录一段声音</button>
+          <button type="button" className={mode === "text" ? "active" : ""} onClick={() => switchMode("text")} disabled={submitting}>写句话</button>
+          <button type="button" className={mode === "voice" ? "active" : ""} onClick={() => switchMode("voice")} disabled={submitting}>录一段声音</button>
+        </div>
+        <div className="prompt-card" aria-live="polite">
+          <div><p className="eyebrow">{mode === "voice" ? "ONE SMALL QUESTION" : "ONE SMALL QUESTION"}</p><button type="button" onClick={shufflePrompt} disabled={submitting}>换一个问题</button></div>
+          <strong>{activePrompt.question}</strong>
+          <span>{activePrompt.hint}</span>
+          <small>任选一个问题，也可以完全按自己的方式说。</small>
         </div>
         {mode === "text" ? (
-          <label>想对沐恩说的话<textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="慢慢长大，我们一直都在。" rows="5" /></label>
+          <label>想对沐恩说的话<textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={activePrompt.question} rows="5" disabled={submitting} /></label>
         ) : (
-          <div className={`recorder-box ${requestingMic ? "is-requesting" : ""}`}>
+          <div className={`recorder-box ${requestingMic ? "is-requesting" : ""} ${submitting ? "is-submitting" : ""}`}>
             <div className="recorder-status-row">
               <p>{requestingMic ? "正在请求麦克风权限，请留意浏览器提示…" : recording ? "正在记录这段声音…" : audioBlob ? "声音已经保存，可以先试听" : "按下按钮，录一段不超过一分钟的祝福"}</p>
               <span className="recording-duration" aria-label={`录音时长 ${formatDuration(recordingSeconds)}`}>{formatDuration(recordingSeconds)}</span>
@@ -472,11 +539,12 @@ function BlessingDialog({ onClose, onSave }) {
               <span className="waveform-caption">{recording ? "正在听见你的声音" : audioBlob ? "这一段声音的温度" : "波形会随着声音轻轻起伏"}</span>
             </div>
             {audioPreview && <audio className="media-player" controls src={audioPreview} />}
-            <button className="secondary-button" type="button" disabled={requestingMic} onClick={recording ? stopRecording : startRecording}>{requestingMic ? "等待授权…" : recording ? "结束录音" : audioBlob ? "重新录音" : "开始录音"}</button>
+            <button className="secondary-button" type="button" disabled={requestingMic || submitting} onClick={recording ? stopRecording : startRecording}>{requestingMic ? "等待授权…" : recording ? "结束录音" : audioBlob ? "重新录音" : "开始录音"}</button>
           </div>
         )}
+        {submitting && <ProcessingNotice message={savingStatus || "正在保存祝福…"} detail={audioBlob ? "请保持这个页面打开，无需重复点击。" : "正在把这句话写进沐恩的星图。"} />}
         {error && <p className="form-error">{error}</p>}
-        <button className="primary-button" type="submit">点亮这颗星</button>
+        <button className="primary-button" type="submit" disabled={submitting || recording || requestingMic}>{submitting ? (audioBlob ? "上传中，请稍候…" : "正在点亮，请稍候…") : recording || requestingMic ? "请先完成录音" : "点亮这颗星"}</button>
       </form>
     </Modal>
   );
@@ -487,8 +555,10 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savingStatus, setSavingStatus] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [passwordUpdatedAt, setPasswordUpdatedAt] = useState("");
+  const addLockRef = useRef(false);
 
   function unlock(event) {
     event.preventDefault();
@@ -511,6 +581,7 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
 
   async function addItem(event) {
     event.preventDefault();
+    if (saving || addLockRef.current) return;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     const file = form.get("attachment");
@@ -518,10 +589,20 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
     const note = String(form.get("note") ?? "").trim();
     const occurredAt = String(form.get("occurredAt") ?? "");
     if (!title || !occurredAt) return;
+    const attachment = file instanceof File && file.size ? file : null;
+    addLockRef.current = true;
     setSaving(true);
-    await onAdd({ id: crypto.randomUUID(), title, note, occurredAt: new Date(occurredAt).toISOString(), file: file instanceof File && file.size ? file : null });
-    formElement.reset();
-    setSaving(false);
+    setError("");
+    setSavingStatus(attachment ? "正在准备上传素材…" : "正在写入时间线…");
+    try {
+      await onAdd({ id: crypto.randomUUID(), title, note, occurredAt: new Date(occurredAt).toISOString(), file: attachment }, setSavingStatus);
+      formElement.reset();
+    } catch (saveError) {
+      setError(saveError?.message || "这条记录暂时没有保存成功，请稍后重试。");
+    } finally {
+      addLockRef.current = false;
+      setSaving(false);
+    }
   }
 
   return (
@@ -543,7 +624,8 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
             <label>发生时间<input name="occurredAt" type="datetime-local" required /></label>
             <label>简短说明<textarea name="note" rows="3" placeholder="留下一点当时的细节" /></label>
             <label>图片、音视频或文档<input name="attachment" type="file" accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.txt,.md" /></label>
-            <button className="primary-button" type="submit" disabled={saving}>{saving ? "正在保存…" : "加入时间线"}</button>
+            {saving && <ProcessingNotice message={savingStatus || "正在保存这条记录…"} detail="请保持页面打开，素材上传完成后会自动加入时间线。" />}
+            <button className="primary-button" type="submit" disabled={saving}>{saving ? "正在上传 / 保存中…" : "加入时间线"}</button>
           </form>
           <div className="manage-list">
             <div><p className="eyebrow">LOCAL ARCHIVE</p><h3>当前时间线</h3></div>
@@ -590,6 +672,8 @@ export function App() {
   const [activeBlessing, setActiveBlessing] = useState(null);
   const [showBlessingDialog, setShowBlessingDialog] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const blessingSaveLockRef = useRef(false);
+  const timelineSaveLockRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -620,23 +704,35 @@ export function App() {
     finally { setLoginBusy(false); }
   }
 
-  async function addBlessing(blessing) {
+  async function addBlessing(blessing, onProgress = () => {}) {
+    if (blessingSaveLockRef.current) throw new Error("这份祝福正在发送，请稍候。");
     const ownerToken = createOwnerToken();
+    blessingSaveLockRef.current = true;
+    setRemoteError("");
     try {
       if (remoteStatus === "remote") {
+        onProgress(blessing.audioBlob ? "正在上传这段声音…" : "正在写入这句祝福…");
         const audioKey = blessing.audioBlob ? await uploadRemoteAudio(blessing.audioBlob) : null;
+        onProgress("正在把祝福点亮成一颗星…");
         await createRemoteBlessing({ id: blessing.id, name: blessing.name, message: blessing.message, audioKey, ownerToken });
+        onProgress("正在同步家人的星图…");
         const state = await loadRemoteState(); setTimeline(state.timeline || []); setBlessings(state.blessings || []);
         const created = (state.blessings || []).find((item) => item.id === blessing.id) || { ...blessing, audioKey };
         setActiveBlessing(created);
       } else {
+        onProgress(blessing.audioBlob ? "正在保存这段声音…" : "正在点亮这颗星…");
         const audioId = blessing.audioBlob ? await saveAsset(blessing.audioBlob) : null;
         const localBlessing = { id: blessing.id, name: blessing.name, message: blessing.message, audioId, createdAt: blessing.createdAt };
         setBlessings((current) => [...current, localBlessing]); setActiveBlessing(localBlessing);
       }
       setOwnerTokens((current) => ({ ...current, [blessing.id]: ownerToken }));
       setShowBlessingDialog(false);
-    } catch (error) { setRemoteError(error.message); }
+    } catch (error) {
+      setRemoteError(error.message);
+      throw error;
+    } finally {
+      blessingSaveLockRef.current = false;
+    }
   }
   async function deleteTimelineItem(item) {
     if (!window.confirm(`确认删除“${item.title}”吗？`)) return;
@@ -675,17 +771,29 @@ export function App() {
     } catch (error) { setRemoteError(error.message); }
   }
 
-  async function addTimelineItem(item) {
+  async function addTimelineItem(item, onProgress = () => {}) {
+    if (timelineSaveLockRef.current) throw new Error("这条记录正在保存，请稍候。");
+    timelineSaveLockRef.current = true;
+    setRemoteError("");
     try {
       if (remoteStatus === "remote") {
+        onProgress(item.file ? "正在上传素材…" : "正在写入时间线…");
         const form = new FormData(); form.set("id", item.id); form.set("title", item.title); form.set("note", item.note); form.set("occurredAt", item.occurredAt); if (item.file) form.set("attachment", item.file, item.file.name);
-        await createRemoteTimeline(form); const state = await loadRemoteState(); setTimeline(state.timeline || []); setBlessings(state.blessings || []);
+        await createRemoteTimeline(form);
+        onProgress("正在同步时间线…");
+        const state = await loadRemoteState(); setTimeline(state.timeline || []); setBlessings(state.blessings || []);
       } else {
+        onProgress(item.file ? "正在保存素材…" : "正在写入时间线…");
         let assetId = null; let kind = "text"; let fileName = ""; let mimeType = "";
         if (item.file) { assetId = await saveAsset(item.file); kind = classifyFile(item.file); fileName = item.file.name; mimeType = item.file.type; }
         setTimeline((current) => [...current, { ...item, assetId, kind, fileName, mimeType, file: undefined }]);
       }
-    } catch (error) { setRemoteError(error.message); }
+    } catch (error) {
+      setRemoteError(error.message);
+      throw error;
+    } finally {
+      timelineSaveLockRef.current = false;
+    }
   }
 
   if (remoteStatus === "checking") return <main className="access-gate"><div className="access-card"><p className="eyebrow">MOON · PRIVATE FAMILY ROOM</p><h1>正在点亮月光房间…</h1><p>请稍等，正在确认这是本地预览还是共享入口。</p></div></main>;
@@ -718,7 +826,7 @@ export function App() {
       </main>
       {showBlessingDialog && <BlessingDialog onClose={() => setShowBlessingDialog(false)} onSave={addBlessing} />}
       {activeEvent && <Modal title={activeEvent.title} onClose={() => setActiveEvent(null)}><div className="detail-stack"><p className="detail-date">{formatDate(activeEvent.occurredAt)}</p><AssetView item={activeEvent} />{activeEvent.note && <p className="detail-note">{activeEvent.note}</p>}</div></Modal>}
-      {activeBlessing && <Modal title={`${activeBlessing.name} 留下的祝福`} onClose={() => setActiveBlessing(null)}><div className="detail-stack blessing-detail"><img className="detail-star" src="/assets/art/blessing-star.png" alt="" />{activeBlessing.message && <blockquote>{activeBlessing.message}</blockquote>}{(activeBlessing.audioId || activeBlessing.audioKey) && <AssetView item={{ ...activeBlessing, kind: "audio", assetId: activeBlessing.audioId, audioKey: activeBlessing.audioKey }} />}<div className="blessing-detail-actions">{ownerTokens[activeBlessing.id] && <button className="danger-button" type="button" onClick={() => deleteOwnBlessing(activeBlessing)}>撤回这句祝福</button>}<p className="detail-date">{formatDate(activeBlessing.createdAt)}</p></div></div></Modal>}
+      {activeBlessing && <Modal title={`来自 ${activeBlessing.name} 的留言`} onClose={() => setActiveBlessing(null)}><div className="detail-stack blessing-detail"><img className="detail-star" src="/assets/art/blessing-star.png" alt="" /><p className="blessing-byline">这颗星由 {activeBlessing.name} 点亮</p>{activeBlessing.message && <blockquote>{activeBlessing.message}</blockquote>}{(activeBlessing.audioId || activeBlessing.audioKey) && <AssetView item={{ ...activeBlessing, kind: "audio", assetId: activeBlessing.audioId, audioKey: activeBlessing.audioKey }} />}<div className="blessing-detail-actions">{ownerTokens[activeBlessing.id] && <button className="danger-button" type="button" onClick={() => deleteOwnBlessing(activeBlessing)}>撤回这句祝福</button>}<p className="detail-date">{formatDate(activeBlessing.createdAt)}</p></div></div></Modal>}
       {showAdmin && <AdminDialog items={timeline} blessings={blessings} remote={remoteStatus === "remote"} onClose={() => setShowAdmin(false)} onAdd={addTimelineItem} onDeleteItem={deleteTimelineItem} onDeleteBlessing={deleteBlessing} onDeleteAllBlessings={deleteAllBlessings} />}
     </div>
   );
