@@ -49,7 +49,7 @@ function starPlacement(seed, index = 0) {
     value = (Math.imul(value, 1664525) + 1013904223) >>> 0;
     return value / 4294967296;
   };
-  return { left: `${10 + next() * 80}%`, top: `${10 + next() * 76}%`, size: 25 + Math.round(next() * 21), delay: `${-(next() * 4.6).toFixed(2)}s`, opacity: 0.78 + next() * 0.22 };
+  return { left: `${18 + next() * 64}%`, top: `${28 + next() * 44}%`, size: 25 + Math.round(next() * 21), delay: `${-(next() * 4.6).toFixed(2)}s`, opacity: 0.78 + next() * 0.22 };
 }
 
 function createOwnerToken() {
@@ -205,7 +205,7 @@ function StarMap({ blessings, onOpen, onStart, ownerTokens }) {
         const placement = starPlacement(blessing.id, index);
         const isOwned = Boolean(ownerTokens[blessing.id]);
         return (
-          <button className={`blessing-star ${blessing.audioId || blessing.audioKey ? "voice-star" : ""} ${isOwned ? "owned-star" : ""}`} type="button" key={blessing.id} style={{ left: placement.left, top: placement.top, width: placement.size, height: placement.size, animationDelay: placement.delay }} onClick={() => onOpen(blessing)} aria-label={`打开 ${blessing.name} 留下的祝福${isOwned ? " · 我的祝福" : ""}`} title={blessing.name}>
+          <button className={`blessing-star ${blessing.audioId || blessing.audioKey ? "voice-star" : ""} ${isOwned ? "owned-star" : ""}`} type="button" key={blessing.id} style={{ left: placement.left, top: placement.top, width: placement.size, height: placement.size, animationDelay: placement.delay }} onClick={() => onOpen(blessing)} aria-label={`打开 ${blessing.name} 留下的祝福${isOwned ? " · 我的祝福" : ""}`}>
             <img src="/assets/art/blessing-star.png" alt="" />
             <span className="star-tooltip" aria-hidden="true"><strong>{blessing.name} 的留言</strong><small>轻触查看</small></span>
           </button>
