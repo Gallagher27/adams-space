@@ -739,10 +739,10 @@ function AccessGate({ onSubmit, error, busy, lang, onLanguageChange }) {
         <p>{t(lang, "accessBody")}</p>
         <form className="form-stack" onSubmit={(event) => { event.preventDefault(); onSubmit(password); }}>
           <label>{t(lang, "accessPassword")}<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoFocus autoComplete="current-password" placeholder={t(lang, "accessPlaceholder")} /></label>
+          <p className="access-hint">{t(lang, "moonAnswer")}</p>
           {error && <p className="form-error">{error}</p>}
           <button className="primary-button" type="submit" disabled={busy}>{busy ? t(lang, "opening") : t(lang, "openRoom")}</button>
         </form>
-        <p className="access-hint">{t(lang, "moonAnswer")}</p>
         <small>{t(lang, "passwordHint")}</small>
       </div>
     </main>
