@@ -126,3 +126,31 @@ test("lets a blessing owner revoke only their own entry and lets admin clear all
   const state = await request("/api/state", { env: runtime, headers: { cookie: viewerCookie } });
   assert.deepEqual((await state.json()).blessings, []);
 });
+
+test("records a public visit and exposes it only to administrators", async () => {
+  const db = new D1Database();
+  const runtime = env(db);
+  const visitId = "visit-test-001";
+  const start = await request("/api/visits/start", { env: runtime, method: "POST", headers: { "content-type": "application/json", "CF-Connecting-IP": "203.0.113.24", "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1" }, body: JSON.stringify({ visitId, path: "/", language: "zh-CN" }) });
+  assert.equal(start.status, 200);
+  const heartbeat = await request("/api/visits/heartbeat", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ visitId, active: true }) });
+  assert.equal(heartbeat.status, 200);
+  const end = await request("/api/visits/end", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ visitId, active: true }) });
+  assert.equal(end.status, 200);
+
+  const viewerLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "moon0825" }) });
+  const viewerCookie = cookieFrom(viewerLogin);
+  const viewerAttempt = await request("/api/admin/access-visits", { env: runtime, headers: { cookie: viewerCookie } });
+  assert.equal(viewerAttempt.status, 403);
+
+  const adminLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "admin-test-secret", role: "admin" }) });
+  const adminCookie = cookieFrom(adminLogin);
+  const log = await request("/api/admin/access-visits", { env: runtime, headers: { cookie: adminCookie } });
+  assert.equal(log.status, 200);
+  const visits = (await log.json()).visits;
+  assert.equal(visits.length, 1);
+  assert.equal(visits[0].ipAddress, "203.0.113.24");
+  assert.equal(visits[0].deviceType, "mobile");
+  assert.equal(visits[0].browser, "Safari");
+  assert.equal(visits[0].status, "ended");
+});
