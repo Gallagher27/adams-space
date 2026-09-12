@@ -32,6 +32,30 @@ export async function loadRemoteState() {
   return body;
 }
 
+export async function startRemoteVisit(visit) {
+  const response = await fetch("/api/visits/start", { method: "POST", headers: jsonHeaders, credentials: "same-origin", body: JSON.stringify(visit) });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || "访问记录暂时无法保存。");
+  return body;
+}
+
+export async function heartbeatRemoteVisit(visit) {
+  const response = await fetch("/api/visits/heartbeat", { method: "POST", headers: jsonHeaders, credentials: "same-origin", body: JSON.stringify(visit), keepalive: true });
+  return response.ok;
+}
+
+export async function endRemoteVisit(visit) {
+  const response = await fetch("/api/visits/end", { method: "POST", headers: jsonHeaders, credentials: "same-origin", body: JSON.stringify(visit), keepalive: true });
+  return response.ok;
+}
+
+export async function loadRemoteAccessVisits() {
+  const response = await fetch("/api/admin/access-visits", { credentials: "same-origin" });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || "访问记录暂时无法读取。");
+  return body;
+}
+
 export async function createRemoteBlessing(blessing) {
   const response = await fetch("/api/blessings", { method: "POST", headers: jsonHeaders, credentials: "same-origin", body: JSON.stringify(blessing) });
   const body = await response.json().catch(() => ({}));

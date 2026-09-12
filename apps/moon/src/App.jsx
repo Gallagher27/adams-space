@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadAsset, removeAsset, saveAsset } from "./storage.js";
-import { createRemoteBlessing, createRemoteTimeline, deleteRemoteBlessing, deleteRemoteBlessings, deleteRemoteTimeline, detectRemote, getRemotePassword, loadRemoteState, login, loginAdmin, remoteMediaUrl, uploadRemoteAudio } from "./api.js";
+import { createRemoteBlessing, createRemoteTimeline, deleteRemoteBlessing, deleteRemoteBlessings, deleteRemoteTimeline, detectRemote, endRemoteVisit, getRemotePassword, heartbeatRemoteVisit, loadRemoteAccessVisits, loadRemoteState, login, loginAdmin, remoteMediaUrl, startRemoteVisit, uploadRemoteAudio } from "./api.js";
 
 const BIRTH_TIME = new Date("2026-08-25T08:52:00+08:00");
 const LOCAL_ADMIN_PIN = "08250852";
@@ -52,7 +52,7 @@ const COPY = {
     beginning: "THE BEGINNING OF TIME", privateMark: "时沐恩 · 家庭私享纪念页", familyMark: "Shimuen · Family keepsake", manage: "管理", manageEn: "Manage", remoteBanner: "家庭私享入口 · 访问与内容均受保护", localBanner: "本地原型 · 内容仅保存在当前浏览器", birthLine: "2026.08.25 · 08:52 · 时间仍在生长", birthDay: (day) => `来到世界的第 ${day} 天`, breathing: "每一秒，都在成为新的故事", navTimeline: "生命时间线", navBlessings: "家人祝福", counterAria: (d, h, m, s) => `已经来到世界 ${d} 天 ${h} 小时 ${m} 分 ${s} 秒`,
     blessingModal: "留下一颗祝福星", yourName: "你的称呼", namePlaceholder: "例如：外婆", messageMethod: "留言方式", smallQuestion: "一点小问题", shuffle: "换一个问题", freeChoice: "任选一个问题，也可以完全按自己的方式说。", messageToBaby: "想对沐恩说的话", writePlaceholder: "想对沐恩说的话", micWaiting: "正在请求麦克风权限，请留意浏览器提示…", recording: "正在记录这段声音…", audioSaved: "声音已经保存，可以先试听", recordingPrompt: "按下按钮，录一段不超过一分钟的祝福", hearingVoice: "正在听见你的声音", voiceTemperature: "这一段声音的温度", waveformIdle: "波形会随着声音轻轻起伏", waveformRecording: "录音中的声音波形", waveformSaved: "已保存的声音波形", waveformWaiting: "等待录音的声音波形", browserNoWaveform: "你的浏览器暂时无法显示声音波形。", waitPermission: "等待授权…", endRecording: "结束录音", rerecord: "重新录音", startRecording: "开始录音", savingBlessing: "正在保存祝福…", keepOpen: "请保持这个页面打开，无需重复点击。", writingStar: "正在把这句话写进沐恩的星图。", uploading: "上传中，请稍候…", lighting: "正在点亮，请稍候…", finishRecording: "请先完成录音", lightStar: "点亮这颗星", nameRequired: "请先留下你的称呼。", contentRequired: "请写一句话，或者录下一段声音。", finishRecordingError: "请先结束录音，确认声音已经保存后再点亮这颗星。", blessingSaveError: "祝福暂时没有保存成功，请稍后重试。",
     accessEyebrow: "MOON · PRIVATE FAMILY ROOM", accessTitle: "时沐恩的月光房间", accessBody: "这是家人之间的小小入口。输入本月访问密码，去看时间线，也留下你想说的话。", accessPassword: "访问密码", accessPlaceholder: "请输入本月密码", openRoom: "进入月光房间", passwordHint: "密码每月更新一次，请向家人索取最新密码。", moonAnswer: "日月和星辰会给你答案", opening: "正在打开…", checkingTitle: "正在点亮月光房间…", checkingBody: "请稍等，正在确认这是本地预览还是共享入口。",
-    managementShared: "共享内容管理", managementLocal: "本地内容管理", enterManagement: "进入管理模式", protectedNote: "这是受保护的管理入口，新增内容会记录到家庭时间线。", adminPassword: "管理员密码", localPin: "管理密码", verify: "正在验证…", enterManage: "进入管理", thisMonth: "THIS MONTH · ACCESS KEY", currentPassword: "本月访问密码", updatedAt: (date) => `更新于 ${date}`, tellFamily: "请妥善转告家人", viewPassword: "查看本月密码", newMoment: "NEW MOMENT", addMoment: "增加一条时间记录", uploadIntro: "把一张照片和几句话留在沐恩的时间线上。", title: "标题", titlePlaceholder: "例如：第一次回到家", occurredAt: "发生时间", timeHint: "可以选择过去、现在或未来的时间，时间线会自动按发生时间排序。", shortNote: "简短说明", notePlaceholder: "留下一点当时的细节", attachment: "图片或其他素材", uploadHint: "可以只写文字，也可以附上一张图片、音视频或文档。", chooseAttachment: "选择一张图片或文件", dropAttachment: "也可以把素材拖到这里", selectedAttachment: "已选素材", removeAttachment: "移除素材", savingRecord: "正在保存这条记录…", uploadDetail: "请保持页面打开，素材上传完成后会自动加入时间线。", savingUpload: "正在上传 / 保存中…", addToTimeline: "加入时间线", localArchive: "LOCAL ARCHIVE", currentTimeline: "当前时间线", delete: "删除", blessings: "BLESSINGS", clearAll: "清空全部祝福", noBlessings: "还没有访客祝福。", remotePasswordError: "暂时无法读取本月访问密码。", protectedRoom: "家庭私享入口 · 访问与内容均受保护",
+    managementShared: "共享内容管理", managementLocal: "本地内容管理", enterManagement: "进入管理模式", protectedNote: "这是受保护的管理入口，新增内容会记录到家庭时间线。", adminPassword: "管理员密码", localPin: "管理密码", verify: "正在验证…", enterManage: "进入管理", thisMonth: "THIS MONTH · ACCESS KEY", currentPassword: "本月访问密码", updatedAt: (date) => `更新于 ${date}`, tellFamily: "请妥善转告家人", viewPassword: "查看本月密码", newMoment: "NEW MOMENT", addMoment: "增加一条时间记录", uploadIntro: "把一张照片和几句话留在沐恩的时间线上。", title: "标题", titlePlaceholder: "例如：第一次回到家", occurredAt: "发生时间", timeHint: "可以选择过去、现在或未来的时间，时间线会自动按发生时间排序。", shortNote: "简短说明", notePlaceholder: "留下一点当时的细节", attachment: "图片或其他素材", uploadHint: "可以只写文字，也可以附上一张图片、音视频或文档。", chooseAttachment: "选择一张图片或文件", dropAttachment: "也可以把素材拖到这里", selectedAttachment: "已选素材", removeAttachment: "移除素材", savingRecord: "正在保存这条记录…", uploadDetail: "请保持页面打开，素材上传完成后会自动加入时间线。", savingUpload: "正在上传 / 保存中…", addToTimeline: "加入时间线", localArchive: "LOCAL ARCHIVE", currentTimeline: "当前时间线", delete: "删除", blessings: "BLESSINGS", clearAll: "清空全部祝福", noBlessings: "还没有访客祝福。", remotePasswordError: "暂时无法读取本月访问密码。", protectedRoom: "家庭私享入口 · 访问与内容均受保护", accessLogEyebrow: "访问记录", accessLogTitle: "最近来过这里的人", accessLogIntro: "仅管理员可见；记录会自动保留 30 天。时长是根据页面活动心跳估算的。", accessLogRefresh: "刷新记录", accessLogLoading: "正在读取访问记录…", accessLogEmpty: "还没有访问记录。", accessLogError: "访问记录暂时无法读取。", accessLogIp: "IP", accessLogDuration: "停留", accessLogDevice: "设备", accessLogSource: "来源", accessLogLastSeen: "最近活动", accessLogActive: "在线", accessLogEnded: "已离开", accessLogDirect: "直接访问", accessLogPrivacy: "不会向访客展示这些信息。",
     detailFrom: (name) => `来自 ${name} 的留言`, litBy: (name) => `这颗星由 ${name} 点亮`, withdraw: "撤回这句祝福", momentLabel: "查看这一刻", confirmDeleteMoment: (title) => `确认删除“${title}”吗？`, confirmDeleteBlessing: (name) => `确认删除 ${name} 留下的祝福吗？`, confirmWithdraw: "确认撤回这句祝福吗？", confirmClear: (count) => `确认清空全部 ${count} 句访客祝福吗？此操作不可恢复。`, savingMoment: "这条记录正在保存，请稍候。", sendingBlessing: "这份祝福正在发送，请稍候。",
   },
   en: {
@@ -63,7 +63,7 @@ const COPY = {
     beginning: "THE BEGINNING OF TIME", privateMark: "时沐恩 · 家庭私享纪念页", familyMark: "Shimuen · Family keepsake", manage: "管理", manageEn: "Manage", remoteBanner: "Private family room · Protected access and content", localBanner: "Local prototype · Content stays in this browser", birthLine: "2026.08.25 · 08:52 · Time keeps growing", birthDay: (day) => `Day ${day} in the world`, breathing: "Every second becomes a new story", navTimeline: "Life timeline", navBlessings: "Family blessings", counterAria: (d, h, m, s) => `${d} days, ${h} hours, ${m} minutes and ${s} seconds in the world`,
     blessingModal: "Leave a blessing star", yourName: "Your name", namePlaceholder: "e.g. Grandma", messageMethod: "Message type", smallQuestion: "A SMALL QUESTION", shuffle: "Try another", freeChoice: "Choose one, or answer in your own way.", messageToBaby: "A note for Mu En", writePlaceholder: "What would you like to say to Mu En?", micWaiting: "Requesting microphone access—watch for the browser prompt…", recording: "Recording your voice…", audioSaved: "Voice saved; you can listen first", recordingPrompt: "Press to record a blessing under one minute", hearingVoice: "Listening to your voice", voiceTemperature: "The warmth in this voice", waveformIdle: "The waveform will gently move with your voice", waveformRecording: "Live voice waveform", waveformSaved: "Saved voice waveform", waveformWaiting: "Waiting for a voice recording", browserNoWaveform: "Your browser cannot display the waveform right now.", waitPermission: "Waiting for permission…", endRecording: "Finish recording", rerecord: "Record again", startRecording: "Start recording", savingBlessing: "Saving this blessing…", keepOpen: "Keep this page open; there is no need to tap again.", writingStar: "Writing this note into Mu En’s star map.", uploading: "Uploading, please wait…", lighting: "Lighting the star, please wait…", finishRecording: "Finish the recording first", lightStar: "Light this star", nameRequired: "Please leave your name first.", contentRequired: "Write a note or record a voice message.", finishRecordingError: "Finish the recording and make sure it is saved before lighting the star.", blessingSaveError: "The blessing was not saved. Please try again.",
     accessEyebrow: "MOON · PRIVATE FAMILY ROOM", accessTitle: "Shimuen’s moon room", accessBody: "A small room for family. Enter this month’s access password to view the timeline and leave a note.", accessPassword: "Access password", accessPlaceholder: "Enter this month’s password", openRoom: "Enter moon space", passwordHint: "The password changes monthly. Ask a family member for the latest one.", moonAnswer: "The sun, moon, and stars will give you the answer", opening: "Opening…", checkingTitle: "Opening moon space…", checkingBody: "Please wait while we check this private room.",
-    managementShared: "Shared content management", managementLocal: "Local content management", enterManagement: "Enter management mode", protectedNote: "This protected area adds moments to the family timeline.", adminPassword: "Administrator password", localPin: "Management password", verify: "Verifying…", enterManage: "Enter management", thisMonth: "THIS MONTH · ACCESS KEY", currentPassword: "This month’s access password", updatedAt: (date) => `Updated ${date}`, tellFamily: "Please pass it on to family", viewPassword: "View this month’s password", newMoment: "NEW MOMENT", addMoment: "Add a timeline moment", uploadIntro: "Keep a photo and a few words in Mu En’s timeline.", title: "Title", titlePlaceholder: "e.g. First day back home", occurredAt: "When it happened", timeHint: "Choose a past, present, or future time; the timeline sorts itself by when it happened.", shortNote: "Short note", notePlaceholder: "Leave a small detail from that moment", attachment: "Photo or other media", uploadHint: "A note can stand on its own, or you can add a photo, audio, video, or document.", chooseAttachment: "Choose a photo or file", dropAttachment: "You can also drop it here", selectedAttachment: "Selected media", removeAttachment: "Remove media", savingRecord: "Saving this moment…", uploadDetail: "Keep this page open; the media will join the timeline when ready.", savingUpload: "Uploading / saving…", addToTimeline: "Add to timeline", localArchive: "LOCAL ARCHIVE", currentTimeline: "Current timeline", delete: "Delete", blessings: "BLESSINGS", clearAll: "Clear all blessings", noBlessings: "There are no visitor blessings yet.", remotePasswordError: "We could not load this month’s password.", protectedRoom: "Private family room · Protected access and content",
+    managementShared: "Shared content management", managementLocal: "Local content management", enterManagement: "Enter management mode", protectedNote: "This protected area adds moments to the family timeline.", adminPassword: "Administrator password", localPin: "Management password", verify: "Verifying…", enterManage: "Enter management", thisMonth: "THIS MONTH · ACCESS KEY", currentPassword: "This month’s access password", updatedAt: (date) => `Updated ${date}`, tellFamily: "Please pass it on to family", viewPassword: "View this month’s password", newMoment: "NEW MOMENT", addMoment: "Add a timeline moment", uploadIntro: "Keep a photo and a few words in Mu En’s timeline.", title: "Title", titlePlaceholder: "e.g. First day back home", occurredAt: "When it happened", timeHint: "Choose a past, present, or future time; the timeline sorts itself by when it happened.", shortNote: "Short note", notePlaceholder: "Leave a small detail from that moment", attachment: "Photo or other media", uploadHint: "A note can stand on its own, or you can add a photo, audio, video, or document.", chooseAttachment: "Choose a photo or file", dropAttachment: "You can also drop it here", selectedAttachment: "Selected media", removeAttachment: "Remove media", savingRecord: "Saving this moment…", uploadDetail: "Keep this page open; the media will join the timeline when ready.", savingUpload: "Uploading / saving…", addToTimeline: "Add to timeline", localArchive: "LOCAL ARCHIVE", currentTimeline: "Current timeline", delete: "Delete", blessings: "BLESSINGS", clearAll: "Clear all blessings", noBlessings: "There are no visitor blessings yet.", remotePasswordError: "We could not load this month’s password.", protectedRoom: "Private family room · Protected access and content", accessLogEyebrow: "ACCESS LOG", accessLogTitle: "Recent visitors", accessLogIntro: "Visible only to administrators; records are kept for 30 days. Duration is estimated from page activity heartbeats.", accessLogRefresh: "Refresh log", accessLogLoading: "Loading access log…", accessLogEmpty: "No visits recorded yet.", accessLogError: "The access log could not be loaded.", accessLogIp: "IP", accessLogDuration: "Time", accessLogDevice: "Device", accessLogSource: "Source", accessLogLastSeen: "Last active", accessLogActive: "Active", accessLogEnded: "Left", accessLogDirect: "Direct visit", accessLogPrivacy: "This information is never shown to visitors.",
     detailFrom: (name) => `A message from ${name}`, litBy: (name) => `This star was lit by ${name}`, withdraw: "Withdraw this blessing", momentLabel: "View this moment", confirmDeleteMoment: (title) => `Delete “${title}”?`, confirmDeleteBlessing: (name) => `Delete the blessing left by ${name}?`, confirmWithdraw: "Withdraw this blessing?", confirmClear: (count) => `Clear all ${count} visitor blessings? This cannot be undone.`, savingMoment: "This moment is already being saved. Please wait.", sendingBlessing: "This blessing is already being sent. Please wait.",
   },
 };
@@ -191,6 +191,14 @@ function localizedTimelineItem(item, lang) {
 function formatDuration(value) {
   const seconds = Math.max(0, Math.floor(value));
   return `${pad(Math.floor(seconds / 60))}:${pad(seconds % 60)}`;
+}
+
+function formatVisitDuration(value, lang = "zh") {
+  const seconds = Math.max(0, Math.floor(Number(value) || 0));
+  if (seconds < 60) return lang === "en" ? `${seconds}s` : `${seconds} 秒`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return lang === "en" ? `${minutes}m ${remainder}s` : `${minutes} 分 ${remainder} 秒`;
 }
 
 function classifyFile(file) {
@@ -644,7 +652,7 @@ function BlessingDialog({ onClose, onSave, lang }) {
   );
 }
 
-function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteBlessing, onDeleteAllBlessings, remote, lang }) {
+function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteBlessing, onDeleteAllBlessings, onLoadAccessVisits, remote, lang }) {
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
@@ -654,6 +662,9 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
   const [passwordUpdatedAt, setPasswordUpdatedAt] = useState("");
   const [attachmentMeta, setAttachmentMeta] = useState(null);
   const [attachmentPreview, setAttachmentPreview] = useState("");
+  const [accessVisits, setAccessVisits] = useState([]);
+  const [accessVisitsLoading, setAccessVisitsLoading] = useState(false);
+  const [accessVisitsError, setAccessVisitsError] = useState("");
   const attachmentInputRef = useRef(null);
   const addLockRef = useRef(false);
 
@@ -673,10 +684,25 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
       await loginAdmin(pin);
       setUnlocked(true);
       setError("");
+      void refreshAccessVisits();
     } catch (unlockError) {
       setError(localizedError(unlockError, lang));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function refreshAccessVisits() {
+    if (!remote || !onLoadAccessVisits) return;
+    setAccessVisitsLoading(true);
+    setAccessVisitsError("");
+    try {
+      const result = await onLoadAccessVisits();
+      setAccessVisits(result.visits || []);
+    } catch (loadError) {
+      setAccessVisitsError(localizedError(loadError, lang, t(lang, "accessLogError")));
+    } finally {
+      setAccessVisitsLoading(false);
     }
   }
 
@@ -772,6 +798,20 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
             {saving && <ProcessingNotice message={savingStatus || t(lang, "savingRecord")} detail={t(lang, "uploadDetail")} />}
             <button className="primary-button" type="submit" disabled={saving}>{saving ? t(lang, "savingUpload") : t(lang, "addToTimeline")}</button>
           </form>
+          {remote && <section className="access-log-panel" aria-labelledby="access-log-title">
+            <div className="access-log-heading">
+              <div><p className="eyebrow">{t(lang, "accessLogEyebrow")}</p><h3 id="access-log-title">{t(lang, "accessLogTitle")}</h3><p>{t(lang, "accessLogIntro")}</p></div>
+              <button className="secondary-button access-log-refresh" type="button" onClick={refreshAccessVisits} disabled={accessVisitsLoading}>{accessVisitsLoading ? t(lang, "busy") : t(lang, "accessLogRefresh")}</button>
+            </div>
+            {accessVisitsLoading && !accessVisits.length && <p className="empty-copy">{t(lang, "accessLogLoading")}</p>}
+            {accessVisitsError && <p className="form-error">{accessVisitsError}</p>}
+            {!accessVisitsLoading && !accessVisitsError && !accessVisits.length && <p className="empty-copy">{t(lang, "accessLogEmpty")}</p>}
+            {accessVisits.length > 0 && <div className="access-log-list">{accessVisits.map((visit) => <article className="access-log-row" key={visit.visitId}>
+              <div className="access-log-main"><strong>{visit.ipAddress || "—"}</strong><span>{formatDate(visit.startedAt, lang)} · {visit.status === "active" ? t(lang, "accessLogActive") : t(lang, "accessLogEnded")}</span></div>
+              <div className="access-log-meta"><span><small>{t(lang, "accessLogDuration")}</small>{formatVisitDuration(visit.activeSeconds, lang)}</span><span><small>{t(lang, "accessLogDevice")}</small>{[visit.deviceType, visit.browser].filter(Boolean).join(" · ") || "—"}</span><span><small>{t(lang, "accessLogSource")}</small>{visit.referrer || t(lang, "accessLogDirect")}</span><span><small>{t(lang, "accessLogLastSeen")}</small>{formatDate(visit.lastSeenAt, lang)}</span></div>
+            </article>)}</div>}
+            <small className="access-log-privacy">{t(lang, "accessLogPrivacy")}</small>
+          </section>}
           <div className="manage-list">
             <div><p className="eyebrow">{t(lang, "localArchive")}</p><h3>{t(lang, "currentTimeline")}</h3></div>
             {items.map((item) => { const localized = localizedTimelineItem(item, lang); return <div className="manage-row" key={item.id}><div><strong>{localized.title}</strong><span>{formatDate(item.occurredAt, lang)}</span></div><button type="button" onClick={() => onDeleteItem(item)}>{t(lang, "delete")}</button></div>; })}
@@ -821,12 +861,42 @@ export function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const blessingSaveLockRef = useRef(false);
   const timelineSaveLockRef = useRef(false);
+  const visitIdRef = useRef("");
 
   useEffect(() => {
     writeLanguagePreference(lang);
     document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
     document.title = "moon space";
   }, [lang]);
+
+  useEffect(() => {
+    const visitId = visitIdRef.current || (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `visit-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    visitIdRef.current = visitId;
+    const visit = { visitId, path: window.location.pathname || "/", referrer: document.referrer || "", language: navigator.language || "", active: true };
+    let started = false;
+    let ended = false;
+    const heartbeat = () => {
+      if (!started || ended) return;
+      void heartbeatRemoteVisit({ ...visit, active: document.visibilityState === "visible" });
+    };
+    const end = () => {
+      if (!started || ended) return;
+      ended = true;
+      const payload = JSON.stringify({ ...visit, active: true });
+      if (navigator.sendBeacon) navigator.sendBeacon("/api/visits/end", new Blob([payload], { type: "application/json" }));
+      else void endRemoteVisit({ ...visit, active: true });
+    };
+    startRemoteVisit(visit).then(() => { started = true; }).catch(() => {});
+    const heartbeatTimer = window.setInterval(heartbeat, 60_000);
+    document.addEventListener("visibilitychange", heartbeat);
+    window.addEventListener("pagehide", end);
+    return () => {
+      window.clearInterval(heartbeatTimer);
+      document.removeEventListener("visibilitychange", heartbeat);
+      window.removeEventListener("pagehide", end);
+      end();
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -980,7 +1050,7 @@ export function App() {
       {showBlessingDialog && <BlessingDialog onClose={() => setShowBlessingDialog(false)} onSave={addBlessing} lang={lang} />}
       {activeEvent && <Modal title={activeEvent.title} onClose={() => setActiveEvent(null)} lang={lang}><div className="detail-stack"><p className="detail-date">{formatDate(activeEvent.occurredAt, lang)}</p><AssetView item={activeEvent} lang={lang} />{activeEvent.note && <p className="detail-note">{activeEvent.note}</p>}</div></Modal>}
       {activeBlessing && <Modal title={t(lang, "detailFrom", activeBlessing.name)} onClose={() => setActiveBlessing(null)} lang={lang}><div className="detail-stack blessing-detail"><img className="detail-star" src="/assets/art/blessing-star.png" alt="" /><p className="blessing-byline">{t(lang, "litBy", activeBlessing.name)}</p>{activeBlessing.message && <blockquote>{activeBlessing.message}</blockquote>}{(activeBlessing.audioId || activeBlessing.audioKey) && <AssetView item={{ ...activeBlessing, kind: "audio", assetId: activeBlessing.audioId, audioKey: activeBlessing.audioKey }} lang={lang} />}<div className="blessing-detail-actions">{ownerTokens[activeBlessing.id] && <button className="danger-button" type="button" onClick={() => deleteOwnBlessing(activeBlessing)}>{t(lang, "withdraw")}</button>}<p className="detail-date">{formatDate(activeBlessing.createdAt, lang)}</p></div></div></Modal>}
-      {showAdmin && <AdminDialog items={timeline} blessings={blessings} remote={remoteStatus === "remote"} onClose={() => setShowAdmin(false)} onAdd={addTimelineItem} onDeleteItem={deleteTimelineItem} onDeleteBlessing={deleteBlessing} onDeleteAllBlessings={deleteAllBlessings} lang={lang} />}
+      {showAdmin && <AdminDialog items={timeline} blessings={blessings} remote={remoteStatus === "remote"} onClose={() => setShowAdmin(false)} onAdd={addTimelineItem} onDeleteItem={deleteTimelineItem} onDeleteBlessing={deleteBlessing} onDeleteAllBlessings={deleteAllBlessings} onLoadAccessVisits={loadRemoteAccessVisits} lang={lang} />}
     </div>
   );
 }
