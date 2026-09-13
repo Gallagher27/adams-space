@@ -41,6 +41,14 @@ const TIMELINE_COPY = {
   "first-meeting": { zh: { title: "初见", note: "出生后的第一张小小肖像。" }, en: { title: "Our first hello", note: "A tiny portrait from his first day." } },
   "day-six-dream": { zh: { title: "第六天的梦", note: "睡得很安静的一天。" }, en: { title: "A dream on day six", note: "A quiet day of deep sleep." } },
   "day-eight-light": { zh: { title: "第八天的晨光", note: "阳光落在小手和脸颊上。" }, en: { title: "Morning light on day eight", note: "Sunlight rested on his tiny hands and cheeks." } },
+  "894314da-0f2c-4ebd-ac85-9dda0ac77efa": { en: { title: "Watermelon Taro is here", note: "" } },
+};
+
+const BLESSING_COPY = {
+  "bb5af605-522a-4b23-8a4b-af2e72c5ad07": { name: "Da Die", message: "" },
+  "468c1b8a-fe2f-42e8-b21d-ee769b600b5c": { name: "Mom", message: "May you grow healthy, happy, round-cheeked, and wonderfully cute." },
+  "bc665d89-1318-4d62-9ca0-a79b16dd661d": { name: "Grandma", message: "May you grow healthy and happy, surrounded by grace and wisdom." },
+  "c166c5e3-c35b-4c86-924a-7fd94d8b5c26": { name: "Auntie", message: "May our little moon always sleep peacefully~" },
 };
 
 const COPY = {
@@ -217,7 +225,8 @@ function localizedTimelineItem(item, lang) {
 
 function localizedBlessing(blessing, lang) {
   if (lang !== "en") return blessing;
-  return { ...blessing, name: blessing.nameEn || blessing.name, message: blessing.messageEn || blessing.message };
+  const copy = BLESSING_COPY[blessing.id];
+  return { ...blessing, name: blessing.nameEn || copy?.name || blessing.name, message: blessing.messageEn || copy?.message || blessing.message };
 }
 
 function formatDuration(value) {
