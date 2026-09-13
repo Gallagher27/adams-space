@@ -75,7 +75,27 @@ async function audit(db, request, event, metadata = {}) { const [ipHash, uaHash]
 async function rateLimit(db, request) { const now = Math.floor(Date.now() / 1000); const windowStart = now - (now % 900); const key = base64Url(await digest(`${clientIp(request)}:${windowStart}`)); const row = await db.prepare("SELECT count, window_start FROM rate_limits WHERE key = ?1").bind(key).first(); if (row && Number(row.window_start) === windowStart && Number(row.count) >= 8) return false; await db.prepare("INSERT INTO rate_limits (key, count, window_start) VALUES (?1, 1, ?2) ON CONFLICT(key) DO UPDATE SET count = CASE WHEN rate_limits.window_start = excluded.window_start THEN rate_limits.count + 1 ELSE 1 END, window_start = excluded.window_start").bind(key, windowStart).run(); return true; }
 async function seedTimeline(db) { const row = await db.prepare("SELECT COUNT(*) AS count FROM timeline_items").first(); if (Number(row?.count || 0) > 0) return; const now = new Date().toISOString(); await db.batch(SEED_TIMELINE.map((item) => db.prepare("INSERT OR IGNORE INTO timeline_items (id, title, note, occurred_at, kind, asset_key, asset_url, file_name, mime_type, system, created_at) VALUES (?1, ?2, ?3, ?4, ?5, NULL, ?6, '', '', ?7, ?8)").bind(item.id, item.title, item.note, item.occurredAt, item.kind, item.assetUrl || null, item.system, now))); }
 async function ensurePassword(db, env) { let cipher = await configValue(db, "password_ciphertext"); let version = Number(await configValue(db, "password_version") || 0); if (!cipher) { if (!env.MOON_INITIAL_PASSWORD) throw new Error("MOON_INITIAL_PASSWORD is not configured"); cipher = await encrypt(env.MOON_INITIAL_PASSWORD, env); version = 1; await setConfig(db, "password_ciphertext", cipher); await setConfig(db, "password_version", String(version)); await setConfig(db, "password_updated_at", new Date().toISOString()); } return { cipher, version }; }
-async function ensureAdminPassword(db, env) { let cipher = await configValue(db, "admin_password_ciphertext"); let version = Number(await configValue(db, "admin_password_version") || 0); if (!cipher) { if (!env.MOON_ADMIN_PASSWORD) throw new Error("MOON_ADMIN_PASSWORD is not configured"); cipher = await encrypt(env.MOON_ADMIN_PASSWORD, env); version = 1; await setConfig(db, "admin_password_ciphertext", cipher); await setConfig(db, "admin_password_version", String(version)); await setConfig(db, "admin_password_updated_at", new Date().toISOString()); } return { cipher, version }; }
+async function ensureAdminPassword(db, env) {
+  if (!env.MOON_ADMIN_PASSWORD) throw new Error("MOON_ADMIN_PASSWORD is not configured");
+  let cipher = await configValue(db, "admin_password_ciphertext");
+  let version = Number(await configValue(db, "admin_password_version") || 0);
+  let needsSync = !cipher;
+  if (cipher) {
+    try {
+      needsSync = (await decrypt(cipher, env)) !== env.MOON_ADMIN_PASSWORD;
+    } catch {
+      needsSync = true;
+    }
+  }
+  if (needsSync) {
+    cipher = await encrypt(env.MOON_ADMIN_PASSWORD, env);
+    version = Math.max(1, version + 1);
+    await setConfig(db, "admin_password_ciphertext", cipher);
+    await setConfig(db, "admin_password_version", String(version));
+    await setConfig(db, "admin_password_updated_at", new Date().toISOString());
+  }
+  return { cipher, version };
+}
 async function rotatePassword(db, env, request = null) { const current = await ensurePassword(db, env); const password = base64Url(crypto.getRandomValues(new Uint8Array(12))).slice(0, 16); await setConfig(db, "password_ciphertext", await encrypt(password, env)); await setConfig(db, "password_version", String(current.version + 1)); await setConfig(db, "password_updated_at", new Date().toISOString()); if (request) await audit(db, request, "password_rotated", { version: current.version + 1 }); return { password, version: current.version + 1 }; }
 async function rotatePasswordIfDue(db, env, scheduledTime = Date.now()) { const configured = await ensurePassword(db, env); await ensureAdminPassword(db, env); const updatedAt = await configValue(db, "password_updated_at"); if (!updatedAt) return { rotated: false, version: configured.version }; const scheduleDate = new Date(scheduledTime); const previousDate = new Date(updatedAt); const sameMonth = previousDate.getUTCFullYear() === scheduleDate.getUTCFullYear() && previousDate.getUTCMonth() === scheduleDate.getUTCMonth(); if (sameMonth) return { rotated: false, version: configured.version }; const rotated = await rotatePassword(db, env); return { rotated: true, version: rotated.version }; }
 async function requireSession(request, env, db, requiredRole = "viewer") { const session = await sessionFromRequest(request, env, db); if (!session) return json({ error: "需要访问密码" }, 401); if (requiredRole === "admin" && session.role !== "admin") return json({ error: "需要管理员权限" }, 403); return null; }
