@@ -210,8 +210,14 @@ function formatDateTimeLocal(value = new Date()) {
 }
 
 function localizedTimelineItem(item, lang) {
-  const copy = TIMELINE_COPY[item.id]?.[lang];
-  return copy ? { ...item, title: copy.title, note: copy.note } : item;
+  if (lang !== "en") return item;
+  const copy = TIMELINE_COPY[item.id]?.en;
+  return { ...item, title: item.titleEn || copy?.title || item.title, note: item.noteEn || copy?.note || item.note };
+}
+
+function localizedBlessing(blessing, lang) {
+  if (lang !== "en") return blessing;
+  return { ...blessing, name: blessing.nameEn || blessing.name, message: blessing.messageEn || blessing.message };
 }
 
 function formatDuration(value) {
@@ -370,12 +376,13 @@ function StarMap({ blessings, onOpen, onStart, ownerTokens, lang }) {
           <small>{t(lang, "write")} {lang === "zh" ? "，或" : " or "} {t(lang, "voice")}</small>
         </button>
       ) : blessings.map((blessing, index) => {
+        const localized = localizedBlessing(blessing, lang);
         const placement = starPlacement(blessing.id, index);
         const isOwned = Boolean(ownerTokens[blessing.id]);
         return (
-          <button className={`blessing-star ${blessing.audioId || blessing.audioKey ? "voice-star" : ""} ${isOwned ? "owned-star" : ""}`} type="button" key={blessing.id} style={{ left: placement.left, top: placement.top, width: placement.size, height: placement.size, animationDelay: placement.delay }} onClick={() => onOpen(blessing)} aria-label={`${t(lang, "openDocument")} ${t(lang, "starMessage", blessing.name)}${isOwned ? ` · ${t(lang, "mine")}` : ""}`}>
+          <button className={`blessing-star ${blessing.audioId || blessing.audioKey ? "voice-star" : ""} ${isOwned ? "owned-star" : ""}`} type="button" key={blessing.id} style={{ left: placement.left, top: placement.top, width: placement.size, height: placement.size, animationDelay: placement.delay }} onClick={() => onOpen(blessing)} aria-label={`${t(lang, "openDocument")} ${t(lang, "starMessage", localized.name)}${isOwned ? ` · ${t(lang, "mine")}` : ""}`}>
             <img src="/assets/art/blessing-star.png" alt="" />
-            <span className="star-tooltip" aria-hidden="true"><strong>{t(lang, "starMessage", blessing.name)}</strong><small>{t(lang, "tapToView")}</small></span>
+            <span className="star-tooltip" aria-hidden="true"><strong>{t(lang, "starMessage", localized.name)}</strong><small>{t(lang, "tapToView")}</small></span>
           </button>
         );
       })}
@@ -395,7 +402,7 @@ function BlessingsPanel({ blessings, onOpen, onStart, ownerTokens, lang }) {
       <div className="blessing-list">
         {latest.map((blessing) => (
           <button type="button" key={blessing.id} onClick={() => onOpen(blessing)}>
-            <span>{blessing.name}{ownerTokens[blessing.id] && <em className="owner-badge">{t(lang, "mine")}</em>}</span><p>{blessing.message || t(lang, "voiceBlessing")}</p><time>{formatDate(blessing.createdAt, lang)}</time>
+            <span>{localizedBlessing(blessing, lang).name}{ownerTokens[blessing.id] && <em className="owner-badge">{t(lang, "mine")}</em>}</span><p>{localizedBlessing(blessing, lang).message || t(lang, "voiceBlessing")}</p><time>{formatDate(blessing.createdAt, lang)}</time>
           </button>
         ))}
       </div>
@@ -921,7 +928,7 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
             <div className="manage-divider" />
             <div className="manage-heading-row"><div><p className="eyebrow">{t(lang, "blessings")}</p><h3>{t(lang, "familyBlessings")}</h3></div>{blessings.length > 0 && <button className="danger-button" type="button" onClick={onDeleteAllBlessings}>{t(lang, "clearAll")}</button>}</div>
             {blessings.length === 0 && <p className="empty-copy">{t(lang, "noBlessings")}</p>}
-            {blessings.map((blessing) => <div className="manage-row" key={blessing.id}><div><strong>{blessing.name}</strong><span>{blessing.message || t(lang, "voiceBlessing")}</span></div><button type="button" onClick={() => onDeleteBlessing(blessing)}>{t(lang, "delete")}</button></div>)}
+            {blessings.map((blessing) => { const localized = localizedBlessing(blessing, lang); return <div className="manage-row" key={blessing.id}><div><strong>{localized.name}</strong><span>{localized.message || t(lang, "voiceBlessing")}</span></div><button type="button" onClick={() => onDeleteBlessing(blessing)}>{t(lang, "delete")}</button></div>; })}
           </div>
         </div>
       )}
@@ -1166,7 +1173,7 @@ export function App() {
       </main>
       {showBlessingDialog && <BlessingDialog onClose={() => setShowBlessingDialog(false)} onSave={addBlessing} lang={lang} />}
       {activeEvent && <Modal title={activeEvent.title} onClose={() => setActiveEvent(null)} lang={lang}><div className="detail-stack"><p className="detail-date">{formatDate(activeEvent.occurredAt, lang)}</p><AssetView item={activeEvent} lang={lang} />{activeEvent.note && <p className="detail-note">{activeEvent.note}</p>}</div></Modal>}
-      {activeBlessing && <Modal title={t(lang, "detailFrom", activeBlessing.name)} onClose={() => setActiveBlessing(null)} lang={lang}><div className="detail-stack blessing-detail"><img className="detail-star" src="/assets/art/blessing-star.png" alt="" /><p className="blessing-byline">{t(lang, "litBy", activeBlessing.name)}</p>{activeBlessing.message && <blockquote>{activeBlessing.message}</blockquote>}{(activeBlessing.audioId || activeBlessing.audioKey) && <AssetView item={{ ...activeBlessing, kind: "audio", assetId: activeBlessing.audioId, audioKey: activeBlessing.audioKey }} lang={lang} />}<div className="blessing-detail-actions">{ownerTokens[activeBlessing.id] && <button className="danger-button" type="button" onClick={() => deleteOwnBlessing(activeBlessing)}>{t(lang, "withdraw")}</button>}<p className="detail-date">{formatDate(activeBlessing.createdAt, lang)}</p></div></div></Modal>}
+      {activeBlessing && (() => { const localized = localizedBlessing(activeBlessing, lang); return <Modal title={t(lang, "detailFrom", localized.name)} onClose={() => setActiveBlessing(null)} lang={lang}><div className="detail-stack blessing-detail"><img className="detail-star" src="/assets/art/blessing-star.png" alt="" /><p className="blessing-byline">{t(lang, "litBy", localized.name)}</p>{localized.message && <blockquote>{localized.message}</blockquote>}{(activeBlessing.audioId || activeBlessing.audioKey) && <AssetView item={{ ...activeBlessing, kind: "audio", assetId: activeBlessing.audioId, audioKey: activeBlessing.audioKey }} lang={lang} />}<div className="blessing-detail-actions">{ownerTokens[activeBlessing.id] && <button className="danger-button" type="button" onClick={() => deleteOwnBlessing(activeBlessing)}>{t(lang, "withdraw")}</button>}<p className="detail-date">{formatDate(activeBlessing.createdAt, lang)}</p></div></div></Modal>; })()}
       {showAdmin && <AdminDialog items={timeline} blessings={blessings} remote={remoteStatus === "remote"} onClose={() => setShowAdmin(false)} onAdd={addTimelineItem} onDeleteItem={deleteTimelineItem} onDeleteBlessing={deleteBlessing} onDeleteAllBlessings={deleteAllBlessings} onLoadAccessVisits={loadRemoteAccessVisits} lang={lang} />}
     </div>
   );
