@@ -80,6 +80,19 @@ test("separates viewer and administrator sessions", async () => {
   assert.equal((await currentPassword.json()).password, "moon0825");
 });
 
+test("synchronizes a rotated administrator secret from the runtime", async () => {
+  const db = new D1Database();
+  const runtime = env(db);
+  const firstLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "admin-test-secret", role: "admin" }) });
+  assert.equal(firstLogin.status, 200);
+
+  runtime.MOON_ADMIN_PASSWORD = "xUBv6a";
+  const oldLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "admin-test-secret", role: "admin" }) });
+  assert.equal(oldLogin.status, 401);
+  const newLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "xUBv6a", role: "admin" }) });
+  assert.equal(newLogin.status, 200);
+});
+
 test("monthly rotation revokes old viewer sessions", async () => {
   const db = new D1Database();
   const runtime = env(db);
