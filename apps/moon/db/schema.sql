@@ -18,6 +18,17 @@ CREATE TABLE IF NOT EXISTS timeline_items (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS timeline_assets (
+  id TEXT PRIMARY KEY,
+  timeline_id TEXT NOT NULL,
+  asset_key TEXT NOT NULL,
+  file_name TEXT NOT NULL DEFAULT '',
+  mime_type TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL DEFAULT 'document',
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS blessings (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -62,6 +73,7 @@ CREATE TABLE IF NOT EXISTS access_visits (
 );
 
 CREATE INDEX IF NOT EXISTS idx_timeline_occurred_at ON timeline_items (occurred_at);
+CREATE INDEX IF NOT EXISTS idx_timeline_assets_timeline ON timeline_assets (timeline_id, position);
 CREATE INDEX IF NOT EXISTS idx_blessings_created_at ON blessings (created_at);
 CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs (created_at);
 CREATE INDEX IF NOT EXISTS idx_access_visits_last_seen ON access_visits (last_seen_at);

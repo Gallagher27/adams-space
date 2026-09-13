@@ -32,11 +32,13 @@ async function ensureSchema(db) {
   await db.batch([
     db.prepare("CREATE TABLE IF NOT EXISTS site_config (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL)"),
     db.prepare("CREATE TABLE IF NOT EXISTS timeline_items (id TEXT PRIMARY KEY, title TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', occurred_at TEXT NOT NULL, kind TEXT NOT NULL, asset_key TEXT, asset_url TEXT, file_name TEXT, mime_type TEXT, system INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS timeline_assets (id TEXT PRIMARY KEY, timeline_id TEXT NOT NULL, asset_key TEXT NOT NULL, file_name TEXT NOT NULL DEFAULT '', mime_type TEXT NOT NULL DEFAULT '', kind TEXT NOT NULL DEFAULT 'document', position INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)"),
     db.prepare("CREATE TABLE IF NOT EXISTS blessings (id TEXT PRIMARY KEY, name TEXT NOT NULL, message TEXT NOT NULL DEFAULT '', audio_key TEXT, created_at TEXT NOT NULL, ip_hash TEXT, owner_token_hash TEXT)"),
     db.prepare("CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, event TEXT NOT NULL, ip_hash TEXT, user_agent_hash TEXT, created_at TEXT NOT NULL, metadata TEXT NOT NULL DEFAULT '{}')"),
     db.prepare("CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, window_start INTEGER NOT NULL)"),
     db.prepare("CREATE TABLE IF NOT EXISTS access_visits (visit_id TEXT PRIMARY KEY, started_at TEXT NOT NULL, last_seen_at TEXT NOT NULL, ended_at TEXT, active_seconds INTEGER NOT NULL DEFAULT 0, ip_address TEXT NOT NULL, country TEXT, colo TEXT, user_agent TEXT NOT NULL DEFAULT '', device_type TEXT NOT NULL DEFAULT 'unknown', browser TEXT NOT NULL DEFAULT 'unknown', referrer TEXT NOT NULL DEFAULT '', path TEXT NOT NULL DEFAULT '/', language TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'active')"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_access_visits_last_seen ON access_visits (last_seen_at)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_timeline_assets_timeline ON timeline_assets (timeline_id, position)"),
   ]);
   try {
     await db.prepare("ALTER TABLE blessings ADD COLUMN owner_token_hash TEXT").run();
@@ -74,6 +76,21 @@ async function pruneAccessVisits(db) { await db.prepare("DELETE FROM access_visi
 async function audit(db, request, event, metadata = {}) { const [ipHash, uaHash] = await Promise.all([digest(clientIp(request)), digest(request.headers.get("user-agent") || "unknown")]); await db.prepare("INSERT INTO audit_logs (event, ip_hash, user_agent_hash, created_at, metadata) VALUES (?1, ?2, ?3, ?4, ?5)").bind(event, base64Url(ipHash), base64Url(uaHash), new Date().toISOString(), JSON.stringify(metadata)).run(); }
 async function rateLimit(db, request) { const now = Math.floor(Date.now() / 1000); const windowStart = now - (now % 900); const key = base64Url(await digest(`${clientIp(request)}:${windowStart}`)); const row = await db.prepare("SELECT count, window_start FROM rate_limits WHERE key = ?1").bind(key).first(); if (row && Number(row.window_start) === windowStart && Number(row.count) >= 8) return false; await db.prepare("INSERT INTO rate_limits (key, count, window_start) VALUES (?1, 1, ?2) ON CONFLICT(key) DO UPDATE SET count = CASE WHEN rate_limits.window_start = excluded.window_start THEN rate_limits.count + 1 ELSE 1 END, window_start = excluded.window_start").bind(key, windowStart).run(); return true; }
 async function seedTimeline(db) { const row = await db.prepare("SELECT COUNT(*) AS count FROM timeline_items").first(); if (Number(row?.count || 0) > 0) return; const now = new Date().toISOString(); await db.batch(SEED_TIMELINE.map((item) => db.prepare("INSERT OR IGNORE INTO timeline_items (id, title, note, occurred_at, kind, asset_key, asset_url, file_name, mime_type, system, created_at) VALUES (?1, ?2, ?3, ?4, ?5, NULL, ?6, '', '', ?7, ?8)").bind(item.id, item.title, item.note, item.occurredAt, item.kind, item.assetUrl || null, item.system, now))); }
+function mediaKind(mimeType = "") { if (mimeType.startsWith("image/")) return "image"; if (mimeType.startsWith("audio/")) return "audio"; if (mimeType.startsWith("video/")) return "video"; return "document"; }
+function withTimelineAssets(rows, assetRows) {
+  const byTimeline = new Map();
+  for (const asset of assetRows || []) {
+    const list = byTimeline.get(asset.timelineId) || [];
+    list.push({ assetKey: asset.assetKey, fileName: asset.fileName, mimeType: asset.mimeType, kind: asset.kind, position: Number(asset.position || 0) });
+    byTimeline.set(asset.timelineId, list);
+  }
+  return (rows || []).map((row) => {
+    const assets = byTimeline.get(row.id) || [];
+    if (row.assetKey || row.assetUrl) assets.unshift({ assetKey: row.assetKey, assetUrl: row.assetUrl, fileName: row.fileName, mimeType: row.mimeType, kind: row.kind });
+    const firstAsset = assets[0];
+    return { ...row, assetKey: row.assetKey || firstAsset?.assetKey || null, fileName: row.fileName || firstAsset?.fileName || "", mimeType: row.mimeType || firstAsset?.mimeType || "", assets };
+  });
+}
 async function ensurePassword(db, env) { let cipher = await configValue(db, "password_ciphertext"); let version = Number(await configValue(db, "password_version") || 0); if (!cipher) { if (!env.MOON_INITIAL_PASSWORD) throw new Error("MOON_INITIAL_PASSWORD is not configured"); cipher = await encrypt(env.MOON_INITIAL_PASSWORD, env); version = 1; await setConfig(db, "password_ciphertext", cipher); await setConfig(db, "password_version", String(version)); await setConfig(db, "password_updated_at", new Date().toISOString()); } return { cipher, version }; }
 async function ensureAdminPassword(db, env) {
   if (!env.MOON_ADMIN_PASSWORD) throw new Error("MOON_ADMIN_PASSWORD is not configured");
@@ -128,7 +145,16 @@ async function api(request, env, db) {
   if (path === "/api/auth/login" && request.method === "POST") { if (!(await rateLimit(db, request))) return json({ error: "尝试次数过多，请稍后再试。" }, 429, { "retry-after": "900" }); if (Number(request.headers.get("content-length") || 0) > 2048) return json({ error: "请求无效。" }, 400); const body = await request.json().catch(() => ({})); const password = String(body.password || ""); const role = body.role === "admin" ? "admin" : "viewer"; const configured = role === "admin" ? await ensureAdminPassword(db, env) : await ensurePassword(db, env); const expected = await decrypt(configured.cipher, env); if (!password || !(await safeEqual(password, expected))) { await audit(db, request, role === "admin" ? "admin_login_failed" : "login_failed"); return json({ error: "密码不正确。" }, 401); } const token = await issueSession(configured.version, env, role); await audit(db, request, role === "admin" ? "admin_login_succeeded" : "login_succeeded"); return json({ ok: true, role }, 200, { "set-cookie": `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_TTL}` }); }
   if (path === "/api/auth/logout" && request.method === "POST") { await audit(db, request, "logout"); return json({ ok: true }, 200, { "set-cookie": `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0` }); }
   if (path === "/api/session" && request.method === "GET") { const session = await sessionFromRequest(request, env, db); return json({ authenticated: Boolean(session), expiresAt: session?.exp ? new Date(session.exp * 1000).toISOString() : null }, session ? 200 : 401); }
-  if (path === "/api/state" && request.method === "GET") { const denied = await requireSession(request, env, db); if (denied) return denied; const [timelineRows, blessingRows] = await Promise.all([db.prepare("SELECT id, title, note, occurred_at AS occurredAt, kind, asset_key AS assetKey, asset_url AS assetUrl, file_name AS fileName, mime_type AS mimeType, system FROM timeline_items ORDER BY occurred_at ASC").all(), db.prepare("SELECT id, name, message, audio_key AS audioKey, created_at AS createdAt FROM blessings ORDER BY created_at DESC").all()]); await audit(db, request, "state_viewed"); return json({ timeline: timelineRows.results || [], blessings: blessingRows.results || [] }); }
+  if (path === "/api/state" && request.method === "GET") {
+    const denied = await requireSession(request, env, db); if (denied) return denied;
+    const [timelineRows, assetRows, blessingRows] = await Promise.all([
+      db.prepare("SELECT id, title, note, occurred_at AS occurredAt, kind, asset_key AS assetKey, asset_url AS assetUrl, file_name AS fileName, mime_type AS mimeType, system FROM timeline_items ORDER BY occurred_at ASC").all(),
+      db.prepare("SELECT timeline_id AS timelineId, asset_key AS assetKey, file_name AS fileName, mime_type AS mimeType, kind, position FROM timeline_assets ORDER BY timeline_id, position ASC").all(),
+      db.prepare("SELECT id, name, message, audio_key AS audioKey, created_at AS createdAt FROM blessings ORDER BY created_at DESC").all(),
+    ]);
+    await audit(db, request, "state_viewed");
+    return json({ timeline: withTimelineAssets(timelineRows.results || [], assetRows.results || []), blessings: blessingRows.results || [] });
+  }
   const denied = await requireSession(request, env, db); if (denied) return denied;
   if (path === "/api/admin/access-visits" && request.method === "GET") { const adminDenied = await requireSession(request, env, db, "admin"); if (adminDenied) return adminDenied; await pruneAccessVisits(db); const rows = await db.prepare("SELECT visit_id AS visitId, started_at AS startedAt, last_seen_at AS lastSeenAt, ended_at AS endedAt, active_seconds AS activeSeconds, ip_address AS ipAddress, country, colo, user_agent AS userAgent, device_type AS deviceType, browser, referrer, path, language, status FROM access_visits ORDER BY started_at DESC LIMIT 100").all(); await audit(db, request, "access_visits_viewed", { count: rows.results?.length || 0 }); return json({ visits: rows.results || [], retentionDays: 30 }); }
   if (path === "/api/blessings" && request.method === "POST") { if (Number(request.headers.get("content-length") || 0) > 12000) return json({ error: "祝福内容太长了。" }, 413); const body = await request.json().catch(() => ({})); const id = String(body.id || crypto.randomUUID()).slice(0, 80); const name = String(body.name || "").trim().slice(0, 80); const message = String(body.message || "").trim().slice(0, 1000); const audioKey = body.audioKey ? String(body.audioKey).slice(0, 180) : null; const ownerToken = String(body.ownerToken || "").trim().slice(0, 240); if (!name || (!message && !audioKey)) return json({ error: "称呼与祝福内容不能为空。" }, 400); if (!ownerToken) return json({ error: "请保留这条祝福的撤回凭证。" }, 400); await db.prepare("INSERT INTO blessings (id, name, message, audio_key, created_at, ip_hash, owner_token_hash) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)").bind(id, name, message, audioKey, new Date().toISOString(), base64Url(await digest(clientIp(request))), base64Url(await digest(ownerToken))).run(); await audit(db, request, "blessing_created", { id }); return json({ ok: true, id }); }
@@ -136,8 +162,59 @@ async function api(request, env, db) {
   if (path === "/api/media" && request.method === "POST") { if (!env.MEDIA) return json({ error: "媒体存储尚未配置。" }, 503); const length = Number(request.headers.get("content-length") || 0); if (length > MAX_MEDIA_BYTES) return json({ error: "声音文件不能超过 15MB。" }, 413); const form = await request.formData(); const file = form.get("file"); if (!(file instanceof File) || !file.size || !file.type.startsWith("audio/")) return json({ error: "请上传音频文件。" }, 400); if (file.size > MAX_MEDIA_BYTES) return json({ error: "声音文件不能超过 15MB。" }, 413); const key = `blessings/${crypto.randomUUID()}`; await env.MEDIA.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type, cacheControl: "private, no-store" } }); await audit(db, request, "audio_uploaded", { key }); return json({ key }); }
   if (path.startsWith("/api/media/") && request.method === "GET") { if (!env.MEDIA) return new Response("Media storage is not configured", { status: 503 }); const key = decodeURIComponent(path.slice("/api/media/".length)); if (!/^blessings\/[a-z0-9-]+$/i.test(key) && !/^timeline\/[a-z0-9-]+(?:\.[a-z0-9]+)?$/i.test(key)) return new Response("Not found", { status: 404 }); const object = await env.MEDIA.get(key); if (!object) return new Response("Not found", { status: 404 }); await audit(db, request, "media_viewed", { key }); const headers = new Headers(); object.writeHttpMetadata(headers); headers.set("cache-control", "private, no-store"); return new Response(object.body, { headers }); }
   if (path === "/api/admin/current-password" && request.method === "GET") { const adminDenied = await requireSession(request, env, db, "admin"); if (adminDenied) return adminDenied; const configured = await ensurePassword(db, env); await audit(db, request, "password_viewed"); return json({ password: await decrypt(configured.cipher, env), updatedAt: await configValue(db, "password_updated_at"), version: configured.version }); }
-  if (path === "/api/admin/timeline" && request.method === "POST") { const adminDenied = await requireSession(request, env, db, "admin"); if (adminDenied) return adminDenied; const length = Number(request.headers.get("content-length") || 0); if (length > MAX_TIMELINE_BYTES) return json({ error: "单条记录不能超过 50MB。" }, 413); const form = await request.formData(); const id = String(form.get("id") || crypto.randomUUID()).slice(0, 80); const title = String(form.get("title") || "").trim().slice(0, 120); const note = String(form.get("note") || "").trim().slice(0, 1000); const dateText = String(form.get("occurredAt") || ""); const occurredAt = new Date(dateText); const file = form.get("attachment"); if (!title || Number.isNaN(occurredAt.getTime())) return json({ error: "标题和时间不能为空。" }, 400); let assetKey = null; let fileName = ""; let mimeType = ""; let kind = "text"; if (file instanceof File && file.size) { if (file.size > MAX_TIMELINE_BYTES || !env.MEDIA) return json({ error: "媒体存储尚未配置或文件过大。" }, 503); assetKey = `timeline/${id}-${crypto.randomUUID()}`; fileName = file.name.slice(0, 200); mimeType = file.type || "application/octet-stream"; kind = mimeType.startsWith("image/") ? "image" : mimeType.startsWith("audio/") ? "audio" : mimeType.startsWith("video/") ? "video" : "document"; await env.MEDIA.put(assetKey, await file.arrayBuffer(), { httpMetadata: { contentType: mimeType, cacheControl: "private, no-store" } }); } try { await db.prepare("INSERT OR REPLACE INTO timeline_items (id, title, note, occurred_at, kind, asset_key, asset_url, file_name, mime_type, system, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, NULL, ?7, ?8, 0, ?9)").bind(id, title, note, occurredAt.toISOString(), kind, assetKey, fileName, mimeType, new Date().toISOString()).run(); } catch (error) { if (assetKey && env.MEDIA) await env.MEDIA.delete(assetKey).catch(() => {}); throw error; } await audit(db, request, "timeline_created", { id }); return json({ ok: true, id }); }
-  if (path.startsWith("/api/admin/timeline/") && request.method === "DELETE") { const adminDenied = await requireSession(request, env, db, "admin"); if (adminDenied) return adminDenied; const id = decodeURIComponent(path.slice("/api/admin/timeline/".length)); const row = await db.prepare("SELECT asset_key AS assetKey, system FROM timeline_items WHERE id = ?1").bind(id).first(); if (!row) return json({ error: "记录不存在。" }, 404); if (Number(row.system)) return json({ error: "出生记录不能删除。" }, 400); if (row.assetKey && env.MEDIA) await env.MEDIA.delete(row.assetKey); await db.prepare("DELETE FROM timeline_items WHERE id = ?1").bind(id).run(); await audit(db, request, "timeline_deleted", { id }); return json({ ok: true }); }
+  if (path === "/api/admin/timeline" && request.method === "POST") {
+    const adminDenied = await requireSession(request, env, db, "admin"); if (adminDenied) return adminDenied;
+    const length = Number(request.headers.get("content-length") || 0); if (length > MAX_TIMELINE_BYTES) return json({ error: "单条记录不能超过 50MB。" }, 413);
+    const form = await request.formData();
+    const id = String(form.get("id") || crypto.randomUUID()).slice(0, 80);
+    const title = String(form.get("title") || "").trim().slice(0, 120);
+    const note = String(form.get("note") || "").trim().slice(0, 1000);
+    const dateText = String(form.get("occurredAt") || "");
+    const occurredAt = new Date(dateText);
+    const files = form.getAll("attachments").filter((file) => file instanceof File && file.size);
+    if (!files.length) {
+      const legacyFile = form.get("attachment");
+      if (legacyFile instanceof File && legacyFile.size) files.push(legacyFile);
+    }
+    const totalBytes = files.reduce((total, file) => total + file.size, 0);
+    if (!title || Number.isNaN(occurredAt.getTime())) return json({ error: "标题和时间不能为空。" }, 400);
+    if (files.length && (totalBytes > MAX_TIMELINE_BYTES || !env.MEDIA)) return json({ error: "媒体存储尚未配置或文件过大。" }, 503);
+    const uploadedKeys = [];
+    const assets = [];
+    try {
+      for (const file of files) {
+        const assetKey = `timeline/${id}-${crypto.randomUUID()}`;
+        const fileName = file.name.slice(0, 200);
+        const mimeType = file.type || "application/octet-stream";
+        const kind = mediaKind(mimeType);
+        await env.MEDIA.put(assetKey, await file.arrayBuffer(), { httpMetadata: { contentType: mimeType, cacheControl: "private, no-store" } });
+        uploadedKeys.push(assetKey);
+        assets.push({ assetKey, fileName, mimeType, kind });
+      }
+      const kind = assets.length > 1 ? "gallery" : assets[0]?.kind || "text";
+      const statements = [db.prepare("INSERT OR REPLACE INTO timeline_items (id, title, note, occurred_at, kind, asset_key, asset_url, file_name, mime_type, system, created_at) VALUES (?1, ?2, ?3, ?4, ?5, NULL, NULL, '', '', 0, ?6)").bind(id, title, note, occurredAt.toISOString(), kind, new Date().toISOString())];
+      assets.forEach((asset, position) => statements.push(db.prepare("INSERT INTO timeline_assets (id, timeline_id, asset_key, file_name, mime_type, kind, position, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)").bind(`${id}-${position}-${crypto.randomUUID()}`, id, asset.assetKey, asset.fileName, asset.mimeType, asset.kind, position, new Date().toISOString())));
+      await db.batch(statements);
+    } catch (error) {
+      await Promise.all(uploadedKeys.map((assetKey) => env.MEDIA?.delete(assetKey).catch(() => {})));
+      throw error;
+    }
+    await audit(db, request, "timeline_created", { id, assetCount: assets.length });
+    return json({ ok: true, id, assetCount: assets.length });
+  }
+  if (path.startsWith("/api/admin/timeline/") && request.method === "DELETE") {
+    const adminDenied = await requireSession(request, env, db, "admin"); if (adminDenied) return adminDenied;
+    const id = decodeURIComponent(path.slice("/api/admin/timeline/".length));
+    const row = await db.prepare("SELECT asset_key AS assetKey, system FROM timeline_items WHERE id = ?1").bind(id).first();
+    if (!row) return json({ error: "记录不存在。" }, 404);
+    if (Number(row.system)) return json({ error: "出生记录不能删除。" }, 400);
+    const assetRows = await db.prepare("SELECT asset_key AS assetKey FROM timeline_assets WHERE timeline_id = ?1").bind(id).all();
+    const keys = [...(assetRows.results || []).map((asset) => asset.assetKey), row.assetKey].filter(Boolean);
+    if (env.MEDIA) await Promise.all(keys.map((assetKey) => env.MEDIA.delete(assetKey)));
+    await db.batch([db.prepare("DELETE FROM timeline_assets WHERE timeline_id = ?1").bind(id), db.prepare("DELETE FROM timeline_items WHERE id = ?1").bind(id)]);
+    await audit(db, request, "timeline_deleted", { id, assetCount: keys.length });
+    return json({ ok: true });
+  }
   if (path === "/api/admin/blessings" && request.method === "DELETE") { const adminDenied = await requireSession(request, env, db, "admin"); if (adminDenied) return adminDenied; const rows = await db.prepare("SELECT id, audio_key AS audioKey FROM blessings").all(); for (const row of rows.results || []) if (row.audioKey && env.MEDIA) await env.MEDIA.delete(row.audioKey); await db.prepare("DELETE FROM blessings").run(); await audit(db, request, "blessings_cleared", { count: rows.results?.length || 0 }); return json({ ok: true, count: rows.results?.length || 0 }); }
   if (path.startsWith("/api/admin/blessings/") && request.method === "DELETE") { const adminDenied = await requireSession(request, env, db, "admin"); if (adminDenied) return adminDenied; const id = decodeURIComponent(path.slice("/api/admin/blessings/".length)); const row = await db.prepare("SELECT audio_key AS audioKey FROM blessings WHERE id = ?1").bind(id).first(); if (!row) return json({ error: "祝福不存在。" }, 404); if (row.audioKey && env.MEDIA) await env.MEDIA.delete(row.audioKey); await db.prepare("DELETE FROM blessings WHERE id = ?1").bind(id).run(); await audit(db, request, "blessing_deleted", { id }); return json({ ok: true }); }
   return json({ error: "Not found" }, 404);

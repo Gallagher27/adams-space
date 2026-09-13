@@ -73,6 +73,32 @@ function t(lang, key, ...args) {
   return typeof value === "function" ? value(...args) : value;
 }
 
+const MULTI_UPLOAD_COPY = {
+  zh: {
+    intro: "把同一刻的几张照片和几句话留在沐恩的时间线上。",
+    choose: "选择照片或文件（可多选）",
+    drop: "点击选择或拖入，支持一次添加多张照片",
+    hint: "可以只写文字，也可以一次添加多张照片、音视频或文档。",
+    selected: (count, size) => `已选 ${count} 个素材 · ${size}`,
+    remove: "移除",
+    addMore: "继续添加",
+  },
+  en: {
+    intro: "Keep several photos and a few words from the same moment in Mu En’s timeline.",
+    choose: "Choose photos or files (multiple allowed)",
+    drop: "Click or drop here to add several photos at once",
+    hint: "A note can stand alone, or you can add several photos, audio, video, or documents.",
+    selected: (count, size) => `${count} ${count === 1 ? "item" : "items"} selected · ${size}`,
+    remove: "Remove",
+    addMore: "Add more",
+  },
+};
+
+function uploadText(lang, key, ...args) {
+  const value = MULTI_UPLOAD_COPY[lang]?.[key] ?? MULTI_UPLOAD_COPY.zh[key] ?? key;
+  return typeof value === "function" ? value(...args) : value;
+}
+
 function readLanguagePreference() {
   if (typeof document === "undefined") return "zh";
   const cookieValue = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${LANGUAGE_COOKIE}=`))?.split("=")[1];
@@ -209,6 +235,28 @@ function classifyFile(file) {
   return "document";
 }
 
+function itemAssets(item) {
+  if (Array.isArray(item?.assets) && item.assets.length) return item.assets;
+  if (item?.assetId || item?.assetUrl || item?.assetKey || item?.audioId || item?.audioKey) {
+    return [{
+      assetId: item.assetId,
+      assetUrl: item.assetUrl,
+      assetKey: item.assetKey ?? item.audioKey,
+      kind: item.kind === "gallery" ? "image" : item.kind,
+      fileName: item.fileName,
+      mimeType: item.mimeType,
+    }];
+  }
+  return [];
+}
+
+function formatFileSize(bytes) {
+  const value = Number(bytes) || 0;
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function Modal({ title, children, onClose, wide = false, busy = false, lang = "zh" }) {
   useEffect(() => {
     const onKeyDown = (event) => event.key === "Escape" && !busy && onClose();
@@ -238,31 +286,49 @@ function ProcessingNotice({ message, detail }) {
 }
 
 function AssetView({ item, compact = false, lang = "zh" }) {
-  const [assetUrl, setAssetUrl] = useState(item.assetUrl ?? remoteMediaUrl(item.assetKey ?? item.audioKey));
+  const assets = itemAssets(item);
+  const assetSignature = assets.map((asset) => [asset.assetId, asset.assetKey, asset.assetUrl, asset.fileName].join(":")).join("|");
+  const [resolvedAssets, setResolvedAssets] = useState([]);
   useEffect(() => {
-    let objectUrl = "";
+    let objectUrls = [];
     let cancelled = false;
-    if (!item.assetId) {
-      setAssetUrl(item.assetUrl ?? remoteMediaUrl(item.assetKey ?? item.audioKey));
-      return undefined;
-    }
-    loadAsset(item.assetId).then((blob) => {
-      if (!blob || cancelled) return;
-      objectUrl = URL.createObjectURL(blob);
-      setAssetUrl(objectUrl);
+    setResolvedAssets([]);
+    Promise.all(assets.map(async (asset) => {
+      let url = asset.assetUrl ?? remoteMediaUrl(asset.assetKey ?? asset.audioKey);
+      if (asset.assetId) {
+        const blob = await loadAsset(asset.assetId);
+        if (blob) {
+          url = URL.createObjectURL(blob);
+          if (cancelled) URL.revokeObjectURL(url);
+          else objectUrls.push(url);
+        }
+      }
+      return { ...asset, url };
+    })).then((next) => {
+      if (!cancelled) setResolvedAssets(next.filter((asset) => asset.url));
     });
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [item.assetId, item.assetUrl, item.assetKey, item.audioKey]);
+  }, [assetSignature]);
 
-  if (!item.assetId && !item.assetUrl && !item.assetKey && !item.audioKey) return null;
-  if (!assetUrl) return <div className="asset-loading">{t(lang, "readingAsset")}</div>;
-  if (item.kind === "image") return <img className={compact ? "timeline-thumb" : "detail-image"} src={assetUrl} alt={item.title} />;
-  if (item.kind === "audio") return <audio className="media-player" src={assetUrl} controls preload="metadata" />;
-  if (item.kind === "video") return <video className="detail-video" src={assetUrl} controls preload="metadata" />;
-  return <a className="document-link" href={assetUrl} download={item.fileName ?? t(lang, "unnamedFile")}>{t(lang, "openDocument")} · {item.fileName ?? t(lang, "unnamedFile")}</a>;
+  if (!assets.length) return null;
+  if (!resolvedAssets.length) return <div className="asset-loading">{t(lang, "readingAsset")}</div>;
+  const renderAsset = (asset, index) => {
+    const kind = asset.kind || classifyFile({ type: asset.mimeType || "" });
+    if (kind === "image") return <img className="detail-image" src={asset.url} alt={asset.fileName || item.title} key={`${asset.assetKey || asset.assetId || index}`} />;
+    if (kind === "audio") return <audio className="media-player" src={asset.url} controls preload="metadata" key={`${asset.assetKey || asset.assetId || index}`} />;
+    if (kind === "video") return <video className="detail-video" src={asset.url} controls preload="metadata" key={`${asset.assetKey || asset.assetId || index}`} />;
+    return <a className="document-link" href={asset.url} download={asset.fileName ?? t(lang, "unnamedFile")} key={`${asset.assetKey || asset.assetId || index}`}>{t(lang, "openDocument")} · {asset.fileName ?? t(lang, "unnamedFile")}</a>;
+  };
+  if (compact) {
+    const first = resolvedAssets[0];
+    const kind = first.kind || classifyFile({ type: first.mimeType || "" });
+    if (kind === "image") return <div className="timeline-media-preview"><img className="timeline-thumb" src={first.url} alt={first.fileName || item.title} />{resolvedAssets.length > 1 && <span className="timeline-media-count">+{resolvedAssets.length - 1}</span>}</div>;
+    return <div className="timeline-media-preview timeline-media-placeholder"><span>{kind === "audio" ? "AUDIO" : kind === "video" ? "VIDEO" : "FILE"}</span>{resolvedAssets.length > 1 && <span className="timeline-media-count">+{resolvedAssets.length - 1}</span>}</div>;
+  }
+  return <div className={`detail-media-stack ${resolvedAssets.length > 1 ? "has-gallery" : ""}`}>{resolvedAssets.map(renderAsset)}</div>;
 }
 
 function Timeline({ items, onOpen, lang }) {
@@ -280,8 +346,8 @@ function Timeline({ items, onOpen, lang }) {
             <button className="timeline-content" type="button" onClick={() => onOpen(localizedTimelineItem(item, lang))}>
               <p className="timeline-date">{formatDate(item.occurredAt, lang)}</p>
               <div className="timeline-row">
-                <div><h3>{localizedTimelineItem(item, lang).title}</h3><p>{localizedTimelineItem(item, lang).note}</p><span className="open-hint">{t(lang, "viewMoment")}</span></div>
-                {(item.assetId || item.assetUrl) && <AssetView item={item} compact lang={lang} />}
+                <div><h3>{localizedTimelineItem(item, lang).title}</h3><p>{localizedTimelineItem(item, lang).note}</p><span className="open-hint">{t(lang, "viewMoment")}{itemAssets(item).length > 1 && <em className="timeline-count"> · {itemAssets(item).length} {lang === "en" ? "photos" : "张照片"}</em>}</span></div>
+                {itemAssets(item).length > 0 && <AssetView item={item} compact lang={lang} />}
               </div>
             </button>
           </article>
@@ -660,17 +726,18 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
   const [savingStatus, setSavingStatus] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [passwordUpdatedAt, setPasswordUpdatedAt] = useState("");
-  const [attachmentMeta, setAttachmentMeta] = useState(null);
-  const [attachmentPreview, setAttachmentPreview] = useState("");
+  const [attachments, setAttachments] = useState([]);
   const [accessVisits, setAccessVisits] = useState([]);
   const [accessVisitsLoading, setAccessVisitsLoading] = useState(false);
   const [accessVisitsError, setAccessVisitsError] = useState("");
   const attachmentInputRef = useRef(null);
   const addLockRef = useRef(false);
+  const attachmentsRef = useRef([]);
 
+  useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
   useEffect(() => () => {
-    if (attachmentPreview) URL.revokeObjectURL(attachmentPreview);
-  }, [attachmentPreview]);
+    attachmentsRef.current.forEach((attachment) => attachment.preview && URL.revokeObjectURL(attachment.preview));
+  }, []);
 
   function unlock(event) {
     event.preventDefault();
@@ -706,32 +773,60 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
     }
   }
 
-  function setAttachment(file) {
-    if (!(file instanceof File) || !file.size) return;
-    setAttachmentMeta({ name: file.name, type: file.type, size: file.size });
-    setAttachmentPreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : "");
+  function buildAttachments(fileList) {
+    return [...(fileList || [])].filter((file) => file instanceof File && file.size).map((file) => ({
+      file,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
+    }));
+  }
+
+  function replaceAttachments(fileList) {
+    attachments.forEach((attachment) => attachment.preview && URL.revokeObjectURL(attachment.preview));
+    setAttachments(buildAttachments(fileList));
   }
 
   function handleAttachmentChange(event) {
-    setAttachment(event.target.files?.[0]);
+    const incoming = buildAttachments(event.target.files);
+    if (!incoming.length) return;
+    if (!attachments.length) return setAttachments(incoming);
+    const next = [...attachments, ...incoming];
+    setAttachments(next);
+    const transfer = new DataTransfer();
+    next.forEach((attachment) => transfer.items.add(attachment.file));
+    event.target.files = transfer.files;
   }
 
   function handleAttachmentDrop(event) {
     event.preventDefault();
-    const file = event.dataTransfer.files?.[0];
-    if (!file) return;
-    setAttachment(file);
+    const files = [...(event.dataTransfer.files || [])];
+    if (!files.length) return;
+    replaceAttachments(files);
     if (attachmentInputRef.current) {
       const transfer = new DataTransfer();
-      transfer.items.add(file);
+      files.forEach((file) => transfer.items.add(file));
       attachmentInputRef.current.files = transfer.files;
     }
   }
 
-  function clearAttachment() {
+  function removeAttachment(index) {
+    const removed = attachments[index];
+    if (removed?.preview) URL.revokeObjectURL(removed.preview);
+    const next = attachments.filter((_, itemIndex) => itemIndex !== index);
+    setAttachments(next);
+    if (attachmentInputRef.current) {
+      const transfer = new DataTransfer();
+      next.forEach((attachment) => transfer.items.add(attachment.file));
+      attachmentInputRef.current.files = transfer.files;
+    }
+  }
+
+  function clearAttachments() {
+    attachments.forEach((attachment) => attachment.preview && URL.revokeObjectURL(attachment.preview));
     if (attachmentInputRef.current) attachmentInputRef.current.value = "";
-    setAttachmentMeta(null);
-    setAttachmentPreview("");
+    setAttachments([]);
   }
 
   async function addItem(event) {
@@ -739,20 +834,20 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
     if (saving || addLockRef.current) return;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    const file = form.get("attachment");
+    const files = form.getAll("attachments").filter((file) => file instanceof File && file.size);
     const title = String(form.get("title") ?? "").trim();
     const note = String(form.get("note") ?? "").trim();
     const occurredAt = String(form.get("occurredAt") ?? "");
     if (!title || !occurredAt) return;
-    const attachment = file instanceof File && file.size ? file : null;
+    const attachmentFiles = files;
     addLockRef.current = true;
     setSaving(true);
     setError("");
-    setSavingStatus(attachment ? (lang === "en" ? "Preparing media upload…" : "正在准备上传素材…") : (lang === "en" ? "Writing to the timeline…" : "正在写入时间线…"));
+    setSavingStatus(attachmentFiles.length ? (lang === "en" ? "Preparing media upload…" : "正在准备上传素材…") : (lang === "en" ? "Writing to the timeline…" : "正在写入时间线…"));
     try {
-      await onAdd({ id: crypto.randomUUID(), title, note, occurredAt: new Date(occurredAt).toISOString(), file: attachment }, setSavingStatus);
+      await onAdd({ id: crypto.randomUUID(), title, note, occurredAt: new Date(occurredAt).toISOString(), files: attachmentFiles }, setSavingStatus);
       formElement.reset();
-      clearAttachment();
+      clearAttachments();
     } catch (saveError) {
       setError(localizedError(saveError, lang, lang === "en" ? "This moment was not saved. Please try again." : "这条记录暂时没有保存成功，请稍后重试。"));
     } finally {
@@ -784,7 +879,7 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
               <div>
                 <p className="eyebrow">{t(lang, "newMoment")}</p>
                 <h3>{t(lang, "addMoment")}</h3>
-                <p className="admin-form-intro">{t(lang, "uploadIntro")}</p>
+                <p className="admin-form-intro">{uploadText(lang, "intro")}</p>
               </div>
               <span className="admin-card-index">02</span>
             </div>
@@ -792,13 +887,16 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
             <label>{t(lang, "shortNote")}<textarea name="note" rows="3" placeholder={t(lang, "notePlaceholder")} /></label>
             <label className="upload-dropzone" htmlFor="timeline-attachment" onDragOver={(event) => event.preventDefault()} onDrop={handleAttachmentDrop}>
               <span className="upload-dropzone-icon" aria-hidden="true">＋</span>
-              <span className="upload-dropzone-copy"><strong>{t(lang, "chooseAttachment")}</strong><small>{t(lang, "dropAttachment")} · {t(lang, "uploadHint")}</small></span>
-              <input ref={attachmentInputRef} id="timeline-attachment" name="attachment" type="file" accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.txt,.md" onChange={handleAttachmentChange} />
+              <span className="upload-dropzone-copy"><strong>{uploadText(lang, "choose")}</strong><small>{uploadText(lang, "drop")} · {uploadText(lang, "hint")}</small></span>
+              <input ref={attachmentInputRef} id="timeline-attachment" name="attachments" type="file" multiple accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.txt,.md" onChange={handleAttachmentChange} />
             </label>
-            {attachmentMeta && <div className="attachment-preview">
-              {attachmentPreview ? <img src={attachmentPreview} alt={attachmentMeta.name} /> : <span className="attachment-file-icon" aria-hidden="true">FILE</span>}
-              <div><strong>{attachmentMeta.name}</strong><small>{t(lang, "selectedAttachment")}</small></div>
-              <button type="button" className="danger-button" onClick={clearAttachment} disabled={saving}>{t(lang, "removeAttachment")}</button>
+            {attachments.length > 0 && <div className="attachment-selection">
+              <div className="attachment-selection-head"><strong>{uploadText(lang, "selected", attachments.length, formatFileSize(attachments.reduce((total, attachment) => total + attachment.size, 0)))}</strong><button type="button" className="text-button" onClick={() => attachmentInputRef.current?.click()} disabled={saving}>{uploadText(lang, "addMore")}</button></div>
+              <div className="attachment-grid">{attachments.map((attachment, index) => <div className="attachment-tile" key={`${attachment.name}-${attachment.size}-${index}`}>
+                {attachment.preview ? <img src={attachment.preview} alt={attachment.name} /> : <span className="attachment-file-icon" aria-hidden="true">{classifyFile(attachment.file).toUpperCase()}</span>}
+                <div><strong title={attachment.name}>{attachment.name}</strong><small>{formatFileSize(attachment.size)}</small></div>
+                <button type="button" className="attachment-remove" onClick={() => removeAttachment(index)} disabled={saving} aria-label={`${uploadText(lang, "remove")} ${attachment.name}`}>×</button>
+              </div>)}</div>
             </div>}
             {saving && <ProcessingNotice message={savingStatus || t(lang, "savingRecord")} detail={t(lang, "uploadDetail")} />}
             <button className="primary-button admin-submit-button" type="submit" disabled={saving}>{saving ? t(lang, "savingUpload") : t(lang, "addToTimeline")}</button>
@@ -819,7 +917,7 @@ function AdminDialog({ items, blessings, onClose, onAdd, onDeleteItem, onDeleteB
           </section>}
           <div className="manage-list admin-panel">
             <div className="manage-heading-row manage-list-head"><div><p className="eyebrow">{t(lang, "localArchive")}</p><h3>{t(lang, "currentTimeline")}</h3></div><span className="admin-card-index">04</span></div>
-            {items.map((item) => { const localized = localizedTimelineItem(item, lang); return <div className="manage-row" key={item.id}><div><strong>{localized.title}</strong><span>{formatDate(item.occurredAt, lang)}</span></div><button type="button" onClick={() => onDeleteItem(item)}>{t(lang, "delete")}</button></div>; })}
+            {items.map((item) => { const localized = localizedTimelineItem(item, lang); const mediaCount = itemAssets(item).length; return <div className="manage-row" key={item.id}><div><strong>{localized.title}</strong><span>{formatDate(item.occurredAt, lang)}{mediaCount > 0 ? ` · ${mediaCount} ${lang === "en" ? (mediaCount === 1 ? "item" : "items") : "个素材"}` : ""}</span></div><button type="button" onClick={() => onDeleteItem(item)}>{t(lang, "delete")}</button></div>; })}
             <div className="manage-divider" />
             <div className="manage-heading-row"><div><p className="eyebrow">{t(lang, "blessings")}</p><h3>{t(lang, "familyBlessings")}</h3></div>{blessings.length > 0 && <button className="danger-button" type="button" onClick={onDeleteAllBlessings}>{t(lang, "clearAll")}</button>}</div>
             {blessings.length === 0 && <p className="empty-copy">{t(lang, "noBlessings")}</p>}
@@ -966,7 +1064,7 @@ export function App() {
     if (!window.confirm(t(lang, "confirmDeleteMoment", item.title))) return;
     try {
       if (remoteStatus === "remote") { await deleteRemoteTimeline(item.id); const state = await loadRemoteState(); setTimeline(state.timeline || []); setBlessings(state.blessings || []); }
-      else { if (item.assetId) await removeAsset(item.assetId); setTimeline((current) => current.filter((entry) => entry.id !== item.id)); }
+      else { await Promise.all(itemAssets(item).filter((asset) => asset.assetId).map((asset) => removeAsset(asset.assetId))); setTimeline((current) => current.filter((entry) => entry.id !== item.id)); }
     } catch (error) { setRemoteError(localizedError(error, lang)); }
   }
   async function deleteBlessing(blessing) {
@@ -1003,21 +1101,32 @@ export function App() {
     if (timelineSaveLockRef.current) throw new Error("这条记录正在保存，请稍候。");
     timelineSaveLockRef.current = true;
     setRemoteError("");
+    const files = Array.isArray(item.files) ? item.files : item.file ? [item.file] : [];
     try {
       if (remoteStatus === "remote") {
-        onProgress(item.file ? (lang === "en" ? "Uploading media…" : "正在上传素材…") : (lang === "en" ? "Writing to the timeline…" : "正在写入时间线…"));
-        const form = new FormData(); form.set("id", item.id); form.set("title", item.title); form.set("note", item.note); form.set("occurredAt", item.occurredAt); if (item.file) form.set("attachment", item.file, item.file.name);
+        onProgress(files.length ? (lang === "en" ? `Uploading ${files.length} ${files.length === 1 ? "item" : "items"}…` : `正在上传 ${files.length} 个素材…`) : (lang === "en" ? "Writing to the timeline…" : "正在写入时间线…"));
+        const form = new FormData(); form.set("id", item.id); form.set("title", item.title); form.set("note", item.note); form.set("occurredAt", item.occurredAt); files.forEach((file) => form.append("attachments", file, file.name));
         await createRemoteTimeline(form);
         onProgress(lang === "en" ? "Syncing the timeline…" : "正在同步时间线…");
         const state = await loadRemoteState();
         const savedItem = (state.timeline || []).find((entry) => entry.id === item.id);
-        if (!savedItem || (item.file && !savedItem.assetKey)) throw new Error("时间记录保存失败。");
+        if (!savedItem || (files.length && itemAssets(savedItem).length < files.length)) throw new Error("时间记录保存失败。");
         setTimeline(state.timeline || []); setBlessings(state.blessings || []);
       } else {
-        onProgress(item.file ? (lang === "en" ? "Saving media…" : "正在保存素材…") : (lang === "en" ? "Writing to the timeline…" : "正在写入时间线…"));
-        let assetId = null; let kind = "text"; let fileName = ""; let mimeType = "";
-        if (item.file) { assetId = await saveAsset(item.file); kind = classifyFile(item.file); fileName = item.file.name; mimeType = item.file.type; }
-        setTimeline((current) => [...current, { ...item, assetId, kind, fileName, mimeType, file: undefined }]);
+        onProgress(files.length ? (lang === "en" ? "Saving media…" : "正在保存素材…") : (lang === "en" ? "Writing to the timeline…" : "正在写入时间线…"));
+        const savedAssetIds = [];
+        try {
+          const assets = [];
+          for (const file of files) {
+            const assetId = await saveAsset(file);
+            savedAssetIds.push(assetId);
+            assets.push({ assetId, kind: classifyFile(file), fileName: file.name, mimeType: file.type });
+          }
+          setTimeline((current) => [...current, { ...item, kind: assets.length > 1 ? "gallery" : assets[0]?.kind || "text", assets, file: undefined, files: undefined }]);
+        } catch (error) {
+          await Promise.all(savedAssetIds.map((assetId) => removeAsset(assetId)));
+          throw error;
+        }
       }
     } catch (error) {
       setRemoteError(localizedError(error, lang));

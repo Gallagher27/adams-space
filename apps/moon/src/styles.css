@@ -66,6 +66,11 @@ button:disabled, input:disabled, textarea:disabled { cursor: not-allowed; }
 .timeline-row p { max-width: 27em; margin: 0 0 12px; color: var(--text-soft); font-size: 13px; line-height: 1.7; }
 .open-hint { color: var(--gold-dim); font-size: 11px; letter-spacing: 0.08em; }
 .timeline-thumb { width: 74px; height: 74px; flex: 0 0 74px; object-fit: cover; border: 1px solid rgba(234, 209, 160, 0.42); border-radius: 8px; }
+.timeline-media-preview { position: relative; width: 74px; height: 74px; flex: 0 0 74px; }
+.timeline-media-preview .timeline-thumb { display: block; }
+.timeline-media-placeholder { display: grid; place-items: center; border: 1px solid rgba(234, 209, 160, 0.3); background: rgba(234, 209, 160, 0.07); color: var(--gold-dim); font-size: 9px; letter-spacing: 0.1em; }
+.timeline-media-count { position: absolute; right: -5px; bottom: -5px; display: grid; place-items: center; min-width: 23px; height: 23px; padding: 0 5px; border: 1px solid var(--ink); border-radius: 999px; background: var(--gold); color: var(--ink); font-size: 10px; font-weight: 600; }
+.timeline-count { color: var(--gold); font-style: normal; }
 
 .blessings-column { min-width: 0; padding: 22px 22px 24px; border: 1px solid rgba(234, 209, 160, 0.16); background: linear-gradient(180deg, rgba(13, 28, 50, 0.68), rgba(7, 20, 38, 0.84)); box-shadow: inset 0 1px 0 rgba(255, 240, 207, 0.04), 0 22px 52px rgba(0, 0, 0, 0.12); }
 .star-map { position: relative; height: 285px; margin: 16px 0 20px; border: 1px solid rgba(234, 209, 160, 0.12); border-bottom-color: rgba(234, 209, 160, 0.28); background: radial-gradient(circle at 50% 37%, rgba(74, 102, 138, 0.16), transparent 56%), linear-gradient(135deg, rgba(255, 240, 207, 0.025), transparent 42%); overflow: hidden; }
@@ -157,6 +162,9 @@ button:disabled, input:disabled, textarea:disabled { cursor: not-allowed; }
 .processing-notice small { color: var(--text-soft); font-size: 11px; line-height: 1.45; }
 .loading-orbit { width: 20px; height: 20px; flex: 0 0 20px; border: 1px solid rgba(234, 209, 160, 0.28); border-top-color: var(--gold-bright); border-right-color: var(--gold); border-radius: 50%; animation: spin-orbit 840ms linear infinite; }
 .detail-stack { display: grid; gap: 18px; }
+.detail-media-stack { display: grid; gap: 14px; }
+.detail-media-stack.has-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.detail-media-stack.has-gallery .media-player, .detail-media-stack.has-gallery .document-link { grid-column: 1 / -1; }
 .detail-image, .detail-video { width: 100%; max-height: 60vh; object-fit: contain; background: #050e1c; }
 .detail-note { color: var(--text-soft); font-family: "Songti SC", "STSong", serif; line-height: 1.85; margin: 0; }
 .document-link { display: block; padding: 18px; border: 1px solid var(--line); color: var(--gold); text-decoration: none; text-align: center; }
@@ -213,6 +221,18 @@ button:disabled, input:disabled, textarea:disabled { cursor: not-allowed; }
 .attachment-preview strong { overflow: hidden; color: var(--gold); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .attachment-preview small { color: var(--text-soft); font-size: 10px; }
 .attachment-preview .danger-button { white-space: nowrap; }
+.attachment-selection { display: grid; gap: 11px; padding: 13px; border: 1px solid rgba(234, 209, 160, 0.24); background: rgba(234, 209, 160, 0.045); }
+.attachment-selection-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.attachment-selection-head strong { color: var(--gold); font-size: 11px; font-weight: 400; letter-spacing: 0.06em; }
+.attachment-selection-head .text-button { padding: 4px 0 4px 12px; font-size: 11px; }
+.attachment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.attachment-tile { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-width: 0; padding: 9px; border: 1px solid rgba(234, 209, 160, 0.18); background: rgba(7, 20, 38, 0.58); }
+.attachment-tile img, .attachment-tile .attachment-file-icon { width: 52px; height: 52px; object-fit: cover; border: 1px solid rgba(234, 209, 160, 0.24); }
+.attachment-tile > div { min-width: 0; display: grid; gap: 4px; }
+.attachment-tile strong { overflow: hidden; color: var(--gold); font-size: 11px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-tile small { color: var(--text-soft); font-size: 10px; }
+.attachment-remove { align-self: start; border: 0; background: transparent; color: var(--gold-dim); padding: 0 2px; font-size: 19px; line-height: 1; cursor: pointer; }
+.attachment-remove:hover { color: var(--danger); }
 .admin-submit-button { margin-top: 2px; }
 .manage-list { grid-column: 1 / -1; display: grid; align-content: start; gap: 0; padding: 22px; }
 .manage-list-head { margin-bottom: 5px; }
@@ -297,6 +317,8 @@ button:disabled, input:disabled, textarea:disabled { cursor: not-allowed; }
   .timeline-row h3 { font-size: 21px; line-height: 1.35; }
   .timeline-row p { font-size: 13px; line-height: 1.65; }
   .timeline-thumb { width: 64px; height: 64px; flex-basis: 64px; border-radius: 7px; }
+  .timeline-media-preview { width: 64px; height: 64px; flex-basis: 64px; }
+  .detail-media-stack.has-gallery { grid-template-columns: 1fr 1fr; gap: 9px; }
   .blessings-column { display: block; padding: 20px 16px 22px; }
   .star-map { height: 286px; margin-bottom: 18px; }
   .primary-button, .secondary-button { min-height: 52px; }
@@ -315,6 +337,9 @@ button:disabled, input:disabled, textarea:disabled { cursor: not-allowed; }
   .admin-card-index { width: 25px; height: 25px; flex-basis: 25px; }
   .admin-field-grid { grid-template-columns: 1fr; gap: 18px; }
   .composer-heading { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .attachment-grid { grid-template-columns: 1fr; }
+  .attachment-tile, .attachment-tile img, .attachment-tile .attachment-file-icon { min-height: 44px; }
+  .attachment-tile img, .attachment-tile .attachment-file-icon { width: 44px; height: 44px; }
   .attachment-preview { grid-template-columns: 44px minmax(0, 1fr); }
   .attachment-preview img, .attachment-file-icon { width: 44px; height: 44px; }
   .attachment-preview .danger-button { grid-column: 2; justify-self: start; }

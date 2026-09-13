@@ -21,7 +21,7 @@ npm run dev
 - 可查看的生命时间线；现有三张照片只以缩略图出现，点击后才展开。
 - 家人文字留言会成为祝福星；可录制语音祝福，语音星会有不同的呼吸节奏；发送者可在自己的设备上撤回这句祝福。
 - 手机端有“生命时间线 / 家人祝福”章节入口，电脑端则同时展示三个叙事区域。
-- 本地管理入口支持追加文字、图片、音频、视频、PDF、Word、TXT 或 Markdown 文档，并删除本机内容。
+- 管理入口支持一条时间记录关联多张照片，也可以附加音频、视频、PDF、Word、TXT 或 Markdown 文档；选中的素材会先预览、可继续添加或移除，并可删除时间线内容。
 
 ## 管理与共享
 
@@ -35,7 +35,7 @@ npm run dev
 2. 复制 `wrangler.example.jsonc` 为本机的 `wrangler.jsonc`，把 `database_id` 换成真实 D1 ID；这个本机文件不要提交到 GitHub。
 3. 在 Cloudflare Pages 项目的 Settings → Environment variables 中配置 `MOON_INITIAL_PASSWORD`、`MOON_ADMIN_PASSWORD`、`MOON_ENCRYPTION_KEY`、`MOON_SESSION_SECRET`，四个值都不要写入仓库。首次生产初始化时，把 `MOON_INITIAL_PASSWORD` 设置为 `moon0825`；它只作为第一次写入 D1 的初始值，之后由系统轮换。
 4. 在 Pages 项目绑定 D1（`DB`）与 R2（`MEDIA`），并把自定义域名设为 `moon.gallagher.lol`；DNS 继续交给 Cloudflare 托管。
-5. GitHub 构建设置使用 Root directory `apps/moon`、Build command `npm run build`、Build output directory `dist`。首次部署后，执行 `wrangler d1 migrations apply moon-db --remote`。
+5. GitHub 构建设置使用 Root directory `apps/moon`、Build command `npm run build`、Build output directory `dist`。首次部署或升级到多图时间线后，执行 `wrangler d1 migrations apply moon-db --remote`，其中 `migrations/0003_timeline_assets.sql` 会创建素材关联表。
 
 密码版本和审计事件会记录在 D1 中。Pages 本身不执行 Cron，因此要启用每月轮换，再复制 `wrangler.cron.example.jsonc` 为 `wrangler.cron.jsonc`，填入同一个 D1 ID，并发布一个很小的 Cron Worker：
 

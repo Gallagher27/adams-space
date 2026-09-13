@@ -59,6 +59,10 @@ class MemoryMedia {
       writeHttpMetadata(headers) { headers.set("content-type", object.contentType); },
     };
   }
+
+  async delete(key) {
+    this.objects.delete(key);
+  }
 }
 
 function env(db) {
@@ -219,4 +223,31 @@ test("keeps a timeline attachment available after an administrator upload", asyn
   const media = await request(`/api/media/${encodeURIComponent(item.assetKey)}`, { env: runtime, headers: { cookie: adminCookie } });
   assert.equal(media.status, 200);
   assert.equal(await media.text(), "image-bytes");
+});
+
+test("stores and returns several timeline attachments in their upload order", async () => {
+  const db = new D1Database();
+  const runtime = { ...env(db), MEDIA: new MemoryMedia() };
+  const adminLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "admin-test-secret", role: "admin" }) });
+  const adminCookie = cookieFrom(adminLogin);
+  const form = new FormData();
+  form.set("id", "moment-gallery-test");
+  form.set("title", "一组测试照片");
+  form.set("note", "同一刻的几张照片");
+  form.set("occurredAt", "2026-09-13T09:00:00.000Z");
+  form.append("attachments", new File(["image-one"], "one.jpg", { type: "image/jpeg" }));
+  form.append("attachments", new File(["image-two"], "two.jpg", { type: "image/jpeg" }));
+  const created = await request("/api/admin/timeline", { env: runtime, method: "POST", headers: { cookie: adminCookie }, body: form });
+  assert.equal(created.status, 200);
+  assert.equal((await created.json()).assetCount, 2);
+  const state = await request("/api/state", { env: runtime, headers: { cookie: adminCookie } });
+  const item = (await state.json()).timeline.find((entry) => entry.id === "moment-gallery-test");
+  assert.equal(item.kind, "gallery");
+  assert.equal(item.assets.length, 2);
+  assert.deepEqual(item.assets.map((asset) => asset.fileName), ["one.jpg", "two.jpg"]);
+  for (const [index, asset] of item.assets.entries()) {
+    const media = await request(`/api/media/${encodeURIComponent(asset.assetKey)}`, { env: runtime, headers: { cookie: adminCookie } });
+    assert.equal(media.status, 200);
+    assert.equal(await media.text(), index === 0 ? "image-one" : "image-two");
+  }
 });
