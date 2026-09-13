@@ -42,6 +42,25 @@ class D1Database {
   }
 }
 
+class MemoryMedia {
+  constructor() {
+    this.objects = new Map();
+  }
+
+  async put(key, value, options = {}) {
+    this.objects.set(key, { body: await new Response(value).arrayBuffer(), contentType: options.httpMetadata?.contentType || "application/octet-stream" });
+  }
+
+  async get(key) {
+    const object = this.objects.get(key);
+    if (!object) return null;
+    return {
+      body: object.body,
+      writeHttpMetadata(headers) { headers.set("content-type", object.contentType); },
+    };
+  }
+}
+
 function env(db) {
   return {
     DB: db,
@@ -166,4 +185,38 @@ test("records a public visit and exposes it only to administrators", async () =>
   assert.equal(visits[0].deviceType, "mobile");
   assert.equal(visits[0].browser, "Safari");
   assert.equal(visits[0].status, "ended");
+});
+
+test("serves uploaded timeline media keys without file extensions", async () => {
+  const db = new D1Database();
+  const runtime = { ...env(db), MEDIA: new MemoryMedia() };
+  const viewerLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "moon0825" }) });
+  const viewerCookie = cookieFrom(viewerLogin);
+  const key = "timeline/moment-1234-5678";
+  await runtime.MEDIA.put(key, new Blob(["image-bytes"], { type: "image/jpeg" }), { httpMetadata: { contentType: "image/jpeg" } });
+  const response = await request(`/api/media/${encodeURIComponent(key)}`, { env: runtime, headers: { cookie: viewerCookie } });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-type"), "image/jpeg");
+  assert.equal(await response.text(), "image-bytes");
+});
+
+test("keeps a timeline attachment available after an administrator upload", async () => {
+  const db = new D1Database();
+  const runtime = { ...env(db), MEDIA: new MemoryMedia() };
+  const adminLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "admin-test-secret", role: "admin" }) });
+  const adminCookie = cookieFrom(adminLogin);
+  const form = new FormData();
+  form.set("id", "moment-upload-test");
+  form.set("title", "一张测试照片");
+  form.set("note", "上传后仍然可以读取");
+  form.set("occurredAt", "2026-09-13T08:52:00.000Z");
+  form.set("attachment", new File(["image-bytes"], "newborn.jpg", { type: "image/jpeg" }));
+  const created = await request("/api/admin/timeline", { env: runtime, method: "POST", headers: { cookie: adminCookie }, body: form });
+  assert.equal(created.status, 200);
+  const state = await request("/api/state", { env: runtime, headers: { cookie: adminCookie } });
+  const item = (await state.json()).timeline.find((entry) => entry.id === "moment-upload-test");
+  assert.ok(item?.assetKey);
+  const media = await request(`/api/media/${encodeURIComponent(item.assetKey)}`, { env: runtime, headers: { cookie: adminCookie } });
+  assert.equal(media.status, 200);
+  assert.equal(await media.text(), "image-bytes");
 });
