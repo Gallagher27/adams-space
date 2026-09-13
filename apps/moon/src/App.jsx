@@ -1009,7 +1009,10 @@ export function App() {
         const form = new FormData(); form.set("id", item.id); form.set("title", item.title); form.set("note", item.note); form.set("occurredAt", item.occurredAt); if (item.file) form.set("attachment", item.file, item.file.name);
         await createRemoteTimeline(form);
         onProgress(lang === "en" ? "Syncing the timeline…" : "正在同步时间线…");
-        const state = await loadRemoteState(); setTimeline(state.timeline || []); setBlessings(state.blessings || []);
+        const state = await loadRemoteState();
+        const savedItem = (state.timeline || []).find((entry) => entry.id === item.id);
+        if (!savedItem || (item.file && !savedItem.assetKey)) throw new Error("时间记录保存失败。");
+        setTimeline(state.timeline || []); setBlessings(state.blessings || []);
       } else {
         onProgress(item.file ? (lang === "en" ? "Saving media…" : "正在保存素材…") : (lang === "en" ? "Writing to the timeline…" : "正在写入时间线…"));
         let assetId = null; let kind = "text"; let fileName = ""; let mimeType = "";
