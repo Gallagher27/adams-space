@@ -13,6 +13,7 @@
 | KL Food Map | `apps/food-map/` | `/food-map/` | static | Adams Home |
 | 汇率转换 | `apps/currency-converter/` | `/currency-converter/` | static | Adams Home |
 | Voice Lab | `apps/voice-lab/` | 外部链接 | cloudflare-worker | `voice-lab.gallagher.lol` |
+| Cardroom | 独立项目 `/Users/adam/Documents/HTML-CODE/business-card-network/` | 外部链接 | cloudflare-pages | `cards.gallagher.lol` |
 | Moon 时沐恩家庭纪念页 | `apps/moon/` | 外部链接 | cloudflare-pages | `moon.gallagher.lol` |
 
 ## 修改时看哪里

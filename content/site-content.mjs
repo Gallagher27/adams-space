@@ -235,6 +235,7 @@ export const siteContent = {
       title: { zh: "Cardroom 团队名片关系库", en: "Cardroom · Team Contact Atlas" },
       status: { zh: "在线", en: "Live" },
       kind: { zh: "团队工具", en: "Team workspace" },
+      deployment: "cards.gallagher.lol",
       path: "https://cards.gallagher.lol/",
       featured: false,
       summary: {

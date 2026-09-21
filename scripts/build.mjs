@@ -125,6 +125,8 @@ function renderLayout({ title, description, currentPath, body }) {
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="theme-color" content="${escapeHtml(siteContent.site.themeColor)}" />
   <meta name="color-scheme" content="light" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self'; upgrade-insecure-requests" />
   <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
   <link rel="icon" href="${hrefFor(currentPath, "assets/favicon.svg")}" type="image/svg+xml" />
   <link rel="manifest" href="${hrefFor(currentPath, "site.webmanifest")}" />
