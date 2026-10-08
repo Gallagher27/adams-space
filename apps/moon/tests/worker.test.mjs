@@ -125,7 +125,7 @@ test("monthly rotation revokes old viewer sessions", async () => {
   const adminCookie = cookieFrom(adminLogin);
 
   const { rotatePasswordIfDue } = await import("../worker/index.js");
-  const rotation = await rotatePasswordIfDue(db, runtime, Date.parse("2026-10-01T00:05:00Z"));
+  const rotation = await rotatePasswordIfDue(db, runtime, Date.parse("2026-11-01T00:05:00Z"));
   assert.equal(rotation.rotated, true);
 
   const oldSession = await request("/api/session", { env: runtime, headers: { cookie: viewerCookie } });
@@ -135,6 +135,22 @@ test("monthly rotation revokes old viewer sessions", async () => {
   const rotated = await adminState.json();
   assert.notEqual(rotated.password, "moon0825");
   assert.equal(rotated.password.length, 16);
+});
+
+test("keeps the configured viewer password permanent when requested", async () => {
+  const db = new D1Database();
+  const runtime = env(db);
+  runtime.MOON_PASSWORD_MODE = "permanent";
+  const viewerLogin = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "moon0825" }) });
+  assert.equal(viewerLogin.status, 200);
+  const viewerCookie = cookieFrom(viewerLogin);
+  const { rotatePasswordIfDue } = await import("../worker/index.js");
+  const rotation = await rotatePasswordIfDue(db, runtime, Date.parse("2026-10-01T00:05:00Z"));
+  assert.equal(rotation.rotated, false);
+  const session = await request("/api/session", { env: runtime, headers: { cookie: viewerCookie } });
+  assert.equal(session.status, 200);
+  const stillWorks = await request("/api/auth/login", { env: runtime, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "moon0825" }) });
+  assert.equal(stillWorks.status, 200);
 });
 
 test("lets a blessing owner revoke only their own entry and lets admin clear all", async () => {

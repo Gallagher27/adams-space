@@ -101,7 +101,26 @@ function withTimelineAssets(rows, assetRows) {
     return { ...row, assetKey: row.assetKey || firstAsset?.assetKey || null, fileName: row.fileName || firstAsset?.fileName || "", mimeType: row.mimeType || firstAsset?.mimeType || "", assets };
   });
 }
-async function ensurePassword(db, env) { let cipher = await configValue(db, "password_ciphertext"); let version = Number(await configValue(db, "password_version") || 0); if (!cipher) { if (!env.MOON_INITIAL_PASSWORD) throw new Error("MOON_INITIAL_PASSWORD is not configured"); cipher = await encrypt(env.MOON_INITIAL_PASSWORD, env); version = 1; await setConfig(db, "password_ciphertext", cipher); await setConfig(db, "password_version", String(version)); await setConfig(db, "password_updated_at", new Date().toISOString()); } return { cipher, version }; }
+function isPermanentPassword(env) { return String(env.MOON_PASSWORD_MODE || "").toLowerCase() === "permanent"; }
+async function ensurePassword(db, env) {
+  const initialPassword = String(env.MOON_INITIAL_PASSWORD || "");
+  if (!initialPassword) throw new Error("MOON_INITIAL_PASSWORD is not configured");
+  let cipher = await configValue(db, "password_ciphertext");
+  let version = Number(await configValue(db, "password_version") || 0);
+  let needsSync = !cipher;
+  if (cipher && isPermanentPassword(env)) {
+    try { needsSync = (await decrypt(cipher, env)) !== initialPassword; } catch { needsSync = true; }
+  }
+  if (needsSync) {
+    const hadCipher = Boolean(cipher);
+    cipher = await encrypt(initialPassword, env);
+    version = Math.max(1, version + (hadCipher ? 1 : 0));
+    await setConfig(db, "password_ciphertext", cipher);
+    await setConfig(db, "password_version", String(version));
+    await setConfig(db, "password_updated_at", new Date().toISOString());
+  }
+  return { cipher, version };
+}
 async function ensureAdminPassword(db, env) {
   if (!env.MOON_ADMIN_PASSWORD) throw new Error("MOON_ADMIN_PASSWORD is not configured");
   let cipher = await configValue(db, "admin_password_ciphertext");
@@ -124,7 +143,7 @@ async function ensureAdminPassword(db, env) {
   return { cipher, version };
 }
 async function rotatePassword(db, env, request = null) { const current = await ensurePassword(db, env); const password = base64Url(crypto.getRandomValues(new Uint8Array(12))).slice(0, 16); await setConfig(db, "password_ciphertext", await encrypt(password, env)); await setConfig(db, "password_version", String(current.version + 1)); await setConfig(db, "password_updated_at", new Date().toISOString()); if (request) await audit(db, request, "password_rotated", { version: current.version + 1 }); return { password, version: current.version + 1 }; }
-async function rotatePasswordIfDue(db, env, scheduledTime = Date.now()) { const configured = await ensurePassword(db, env); await ensureAdminPassword(db, env); const updatedAt = await configValue(db, "password_updated_at"); if (!updatedAt) return { rotated: false, version: configured.version }; const scheduleDate = new Date(scheduledTime); const previousDate = new Date(updatedAt); const sameMonth = previousDate.getUTCFullYear() === scheduleDate.getUTCFullYear() && previousDate.getUTCMonth() === scheduleDate.getUTCMonth(); if (sameMonth) return { rotated: false, version: configured.version }; const rotated = await rotatePassword(db, env); return { rotated: true, version: rotated.version }; }
+async function rotatePasswordIfDue(db, env, scheduledTime = Date.now()) { const configured = await ensurePassword(db, env); await ensureAdminPassword(db, env); if (isPermanentPassword(env)) return { rotated: false, version: configured.version }; const updatedAt = await configValue(db, "password_updated_at"); if (!updatedAt) return { rotated: false, version: configured.version }; const scheduleDate = new Date(scheduledTime); const previousDate = new Date(updatedAt); const sameMonth = previousDate.getUTCFullYear() === scheduleDate.getUTCFullYear() && previousDate.getUTCMonth() === scheduleDate.getUTCMonth(); if (sameMonth) return { rotated: false, version: configured.version }; const rotated = await rotatePassword(db, env); return { rotated: true, version: rotated.version }; }
 async function requireSession(request, env, db, requiredRole = "viewer") { const session = await sessionFromRequest(request, env, db); if (!session) return json({ error: "需要访问密码" }, 401); if (requiredRole === "admin" && session.role !== "admin") return json({ error: "需要管理员权限" }, 403); return null; }
 function securityHeaders(response) { const headers = new Headers(response.headers); headers.set("x-content-type-options", "nosniff"); headers.set("x-frame-options", "DENY"); headers.set("referrer-policy", "no-referrer"); headers.set("permissions-policy", "microphone=(self), camera=(), geolocation=()"); headers.set("content-security-policy", "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"); return new Response(response.body, { status: response.status, statusText: response.statusText, headers }); }
 async function visitPayload(request) {

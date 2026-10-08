@@ -34,11 +34,11 @@ npm run dev
 
 1. 在 Cloudflare 创建 D1 数据库（建议名称 `moon-db`）和 R2 存储桶（建议名称 `moon-media`）。
 2. 复制 `wrangler.example.jsonc` 为本机的 `wrangler.jsonc`，把 `database_id` 换成真实 D1 ID；这个本机文件不要提交到 GitHub。
-3. 在 Cloudflare Pages 项目的 Settings → Environment variables 中配置 `MOON_INITIAL_PASSWORD`、`MOON_ADMIN_PASSWORD`、`MOON_ENCRYPTION_KEY`、`MOON_SESSION_SECRET`，四个值都不要写入仓库。首次生产初始化时，把 `MOON_INITIAL_PASSWORD` 设置为 `moon0825`；它只作为第一次写入 D1 的初始值，之后由系统轮换。
+3. 在 Cloudflare Pages 项目的 Settings → Environment variables 中配置 `MOON_INITIAL_PASSWORD`、`MOON_ADMIN_PASSWORD`、`MOON_ENCRYPTION_KEY`、`MOON_SESSION_SECRET`，四个值都不要写入仓库。当前站点将 `MOON_PASSWORD_MODE` 设置为 `permanent`，访问密码固定为 `moon0825`；如需恢复按月轮换，将该模式改为其他值并重新部署。
 4. 在 Pages 项目绑定 D1（`DB`）与 R2（`MEDIA`），并把自定义域名设为 `moon.gallagher.lol`；DNS 继续交给 Cloudflare 托管。
 5. GitHub 构建设置使用 Root directory `apps/moon`、Build command `npm run build`、Build output directory `dist`。首次部署或升级到多图时间线后，执行 `wrangler d1 migrations apply moon-db --remote`；其中 `migrations/0003_timeline_assets.sql` 会创建素材关联表，`migrations/0004_bilingual_content.sql` 会创建中英文内容字段并补齐现有英文翻译。
 
-密码版本和审计事件会记录在 D1 中。Pages 本身不执行 Cron，因此要启用每月轮换，再复制 `wrangler.cron.example.jsonc` 为 `wrangler.cron.jsonc`，填入同一个 D1 ID，并发布一个很小的 Cron Worker：
+密码版本和审计事件会记录在 D1 中。Pages 本身不执行 Cron；当前仍保留 Cron Worker，但永久模式下它只负责检查配置，不会生成新密码。如需启用每月轮换，再将 `MOON_PASSWORD_MODE` 改为非 `permanent` 并重新发布：
 
 ```bash
 npx wrangler deploy --config wrangler.cron.jsonc
